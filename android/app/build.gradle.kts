@@ -4,6 +4,10 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+dependencies {
+    implementation(files("../../Urv_RfidSerialPortSdk_v.2.0.6_release.jar"))
+}
+
 android {
     namespace = "com.example.trays_monitoring"
     compileSdk = flutter.compileSdkVersion
