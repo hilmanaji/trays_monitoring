@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../../core/utils/json_utils.dart';
 import '../../domain/entities/register_rfid_request.dart';
 import '../../domain/entities/scrap_request.dart';
@@ -30,11 +32,11 @@ class TrayRemoteDatasource {
     await _apiService.post(
       '/rfid/register',
       data: <String, dynamic>{
-        'epc': request.epc,
         'rfid_epc': request.epc,
         'tray_type_id': request.trayTypeId,
-        'initial_location_id': request.locationId,
+        'current_location_id': request.locationId,
       },
+      options: Options(contentType: Headers.formUrlEncodedContentType),
     );
   }
 

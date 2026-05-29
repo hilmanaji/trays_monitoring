@@ -25,11 +25,17 @@ final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
 enum AuthStatus { unknown, loading, authenticated, unauthenticated }
 
 class AuthState {
-  const AuthState({required this.status, this.user, this.errorMessage});
+  const AuthState({
+    required this.status,
+    this.user,
+    this.errorMessage,
+    this.isRefreshingUser = false,
+  });
 
   final AuthStatus status;
   final User? user;
   final String? errorMessage;
+  final bool isRefreshingUser;
 
   bool get isAuthenticated =>
       status == AuthStatus.authenticated && user != null;
@@ -40,11 +46,13 @@ class AuthState {
     bool clearUser = false,
     String? errorMessage,
     bool clearError = false,
+    bool? isRefreshingUser,
   }) {
     return AuthState(
       status: status ?? this.status,
       user: clearUser ? null : (user ?? this.user),
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      isRefreshingUser: isRefreshingUser ?? this.isRefreshingUser,
     );
   }
 }
@@ -109,6 +117,32 @@ class AuthController extends StateNotifier<AuthState> {
     state = state.copyWith(status: AuthStatus.loading, clearError: true);
     await logoutUseCase.call();
     state = const AuthState(status: AuthStatus.unauthenticated);
+  }
+
+  Future<void> refreshCurrentUser() async {
+    if (!state.isAuthenticated || state.isRefreshingUser) {
+      return;
+    }
+
+    state = state.copyWith(isRefreshingUser: true, clearError: true);
+    try {
+      final user = await authRepository.getCurrentUser();
+      state = state.copyWith(
+        user: user,
+        status: AuthStatus.authenticated,
+        isRefreshingUser: false,
+      );
+    } on AppException catch (error) {
+      state = state.copyWith(
+        isRefreshingUser: false,
+        errorMessage: error.displayMessage,
+      );
+    } catch (error) {
+      state = state.copyWith(
+        isRefreshingUser: false,
+        errorMessage: error.toString().replaceFirst('Exception: ', ''),
+      );
+    }
   }
 
   Future<void> _handleUnauthorized() async {

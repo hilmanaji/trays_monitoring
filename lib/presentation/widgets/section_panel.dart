@@ -24,10 +24,17 @@ class SectionPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              runSpacing: 8,
+              spacing: 12,
               children: [
-                Expanded(child: Text(title, style: theme.textTheme.titleLarge)),
-                ...?trailing == null ? null : <Widget>[trailing!],
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minWidth: 0, maxWidth: 420),
+                  child: Text(title, style: theme.textTheme.titleLarge),
+                ),
+                if (trailing != null) trailing!,
               ],
             ),
             const SizedBox(height: 16),

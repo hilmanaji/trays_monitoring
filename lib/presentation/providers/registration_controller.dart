@@ -181,7 +181,7 @@ class RegistrationController extends StateNotifier<SubmissionState> {
       state = SubmissionState(
         epcs: failed.keys.toList(),
         errorMessage:
-            '${successCount > 0 ? 'Registered $successCount trays. ' : ''}Failed ${failed.length} RFID tags. Remaining tags were kept in the list for retry.',
+        '${successCount > 0 ? 'Registered $successCount trays. ' : ''}Failed ${failed.length} RFID tags. ${failed.entries.first.key}: ${failed.entries.first.value}. Remaining tags were kept in the list for retry.',
       );
       return false;
     } on AppException catch (error) {

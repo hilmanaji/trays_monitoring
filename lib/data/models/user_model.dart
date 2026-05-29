@@ -8,9 +8,18 @@ class UserModel extends User {
     required super.name,
     required super.email,
     required super.role,
+    required super.roles,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final parsedRoles = JsonUtils.stringList(json['roles']);
+    final fallbackRole = JsonUtils.stringValue(
+      json,
+      const ['role'],
+      fallback: 'operator',
+    );
+    final roles = parsedRoles.isNotEmpty ? parsedRoles : <String>[fallbackRole];
+
     return UserModel(
       id: JsonUtils.intValue(json, const ['id']),
       nik: JsonUtils.stringValue(json, const [
@@ -21,7 +30,8 @@ class UserModel extends User {
         'name',
       ], fallback: 'Warehouse User'),
       email: JsonUtils.stringValue(json, const ['email'], fallback: '-'),
-      role: JsonUtils.stringValue(json, const ['role'], fallback: 'operator'),
+      role: roles.first,
+      roles: roles,
     );
   }
 
@@ -32,6 +42,7 @@ class UserModel extends User {
       'name': name,
       'email': email,
       'role': role,
+      'roles': roles,
     };
   }
 }

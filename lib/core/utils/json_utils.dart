@@ -99,9 +99,6 @@ class JsonUtils {
   }
 
   static JsonMap unwrapMap(dynamic payload) {
-    if (payload is Map<String, dynamic>) {
-      return payload;
-    }
     final map = asMap(payload);
     final data = map['data'];
     if (data is Map) {

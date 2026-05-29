@@ -58,7 +58,7 @@ class MenuScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${user?.nik ?? '-'}  •  ${user?.role.toUpperCase() ?? 'OPERATOR'}',
+                        '${user?.nik ?? '-'}  •  ${user?.rolesLabel.toUpperCase() ?? 'OPERATOR'}',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: Colors.white.withValues(alpha: 0.84),
                         ),

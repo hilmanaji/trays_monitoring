@@ -1,5 +1,6 @@
 package com.example.trays_monitoring
 
+import android.content.Context
 import android.os.Build
 import com.urovo.rfid.RfidReaderMange
 import com.urovo.rfid.RfidReaderMangeModuleInfoCallBack
@@ -20,13 +21,15 @@ class UrovoDt50RfidBridge : MethodChannel.MethodCallHandler, EventChannel.Stream
     private var eventSink: EventChannel.EventSink? = null
     private var isScanning: Boolean = false
     private var flutterEngine: FlutterEngine? = null
+    private var applicationContext: Context? = null
     private var manager: RfidReaderMange? = null
     private var lastModuleStatus: String = "UNINITIALIZED"
     private var lastBatteryInfo: Map<String, Any?> = emptyMap()
     private var lastError: String? = null
 
-    fun register(flutterEngine: FlutterEngine) {
+    fun register(flutterEngine: FlutterEngine, applicationContext: Context) {
         this.flutterEngine = flutterEngine
+        this.applicationContext = applicationContext
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, COMMAND_CHANNEL)
             .setMethodCallHandler(this)
         EventChannel(flutterEngine.dartExecutor.binaryMessenger, TAG_EVENT_CHANNEL)
@@ -65,17 +68,17 @@ class UrovoDt50RfidBridge : MethodChannel.MethodCallHandler, EventChannel.Stream
         eventSink = null
     }
 
-    private fun startScan(): Map<String, Any> {
-        val engine = flutterEngine ?: return deviceInfo().toMutableMap().apply {
+    private fun startScan(): Map<String, Any?> {
+        val context = applicationContext ?: return deviceInfo().toMutableMap().apply {
             put("hardwareReady", false)
-            put("notes", "Flutter engine is not attached to the RFID bridge yet.")
+            put("notes", "Application context is not attached to the RFID bridge yet.")
         }
 
         val rfidManager = manager ?: RfidReaderMange.getInstance().also {
             manager = it
         }
 
-        val initializeCode = rfidManager.initialize(engine.applicationContext)
+        val initializeCode = rfidManager.initialize(context)
         val initializeMessage = rfidManager.getErrorMessage(initializeCode)
         val hardwareReady = initializeCode == 0
 
@@ -152,7 +155,7 @@ class UrovoDt50RfidBridge : MethodChannel.MethodCallHandler, EventChannel.Stream
         }
     }
 
-    private fun deviceInfo(): Map<String, Any> {
+    private fun deviceInfo(): Map<String, Any?> {
         return mapOf(
             "deviceModel" to DEVICE_MODEL,
             "barcodeEngine" to BARCODE_ENGINE,

@@ -7,6 +7,7 @@ class TrayTypeModel extends TrayType {
     required super.code,
     required super.name,
     required super.description,
+    required super.project,
   });
 
   factory TrayTypeModel.fromJson(Map<String, dynamic> json) {
@@ -31,6 +32,10 @@ class TrayTypeModel extends TrayType {
         'project',
         'category',
       ], fallback: 'Tray type configuration'),
+      project: JsonUtils.stringValue(json, const [
+        'project',
+        'category',
+      ], fallback: 'Unassigned'),
     );
   }
 
@@ -40,6 +45,7 @@ class TrayTypeModel extends TrayType {
       'code': code,
       'name': name,
       'description': description,
+      'project': project,
     };
   }
 }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../domain/entities/tray_type.dart';
 import '../../providers/app_providers.dart';
+import '../../utils/project_stock_summary.dart';
 import '../../widgets/module_page.dart';
 import '../../widgets/section_panel.dart';
 
@@ -25,6 +27,7 @@ class _StockScreenState extends ConsumerState<StockScreen> {
   Widget build(BuildContext context) {
     final stockSummary = ref.watch(stockSummaryProvider);
     final stockByType = ref.watch(stockByTrayTypeProvider);
+    final trayTypes = ref.watch(trayTypesProvider);
     final query = _searchController.text.trim().toLowerCase();
 
     return RefreshIndicator(
@@ -39,14 +42,14 @@ class _StockScreenState extends ConsumerState<StockScreen> {
       child: ModulePage(
         title: 'Stock Module',
         subtitle:
-            'Location and tray-type stock visibility with warehouse-friendly tables.',
+            'Location and project-level stock visibility with warehouse-friendly tables.',
         children: [
           SectionPanel(
             title: 'Search',
             child: TextField(
               controller: _searchController,
               decoration: const InputDecoration(
-                labelText: 'Search location or tray type',
+                labelText: 'Search location or project',
                 prefixIcon: Icon(Icons.search_rounded),
               ),
               onChanged: (_) => setState(() {}),
@@ -95,48 +98,81 @@ class _StockScreenState extends ConsumerState<StockScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          stockByType.when(
-            data: (items) {
-              final filtered = items
-                  .where(
-                    (item) => item.trayTypeName.toLowerCase().contains(query),
-                  )
-                  .toList();
-              return SectionPanel(
-                title: 'Stock by Tray Type',
-                child: DataTable(
-                  columns: const [
-                    DataColumn(label: Text('Tray Type')),
-                    DataColumn(label: Text('Total')),
-                  ],
-                  rows: filtered
-                      .map(
-                        (item) => DataRow(
-                          cells: [
-                            DataCell(Text(item.trayTypeName)),
-                            DataCell(Text('${item.total}')),
-                          ],
-                        ),
-                      )
-                      .toList(),
-                ),
-              );
-            },
-            loading: () => const SectionPanel(
-              title: 'Stock by Tray Type',
-              child: Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: CircularProgressIndicator(),
-                ),
-              ),
-            ),
-            error: (error, stackTrace) => SectionPanel(
-              title: 'Stock by Tray Type',
-              child: Text(error.toString()),
-            ),
+          _ProjectStockTable(
+            stockByType: stockByType,
+            trayTypes: trayTypes,
+            query: query,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ProjectStockTable extends StatelessWidget {
+  const _ProjectStockTable({
+    required this.stockByType,
+    required this.trayTypes,
+    required this.query,
+  });
+
+  final AsyncValue<List<dynamic>> stockByType;
+  final AsyncValue<List<TrayType>> trayTypes;
+  final String query;
+
+  @override
+  Widget build(BuildContext context) {
+    if (stockByType.isLoading || trayTypes.isLoading) {
+      return const SectionPanel(
+        title: 'Stock by Project',
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: CircularProgressIndicator(),
+          ),
+        ),
+      );
+    }
+
+    if (stockByType.hasError) {
+      return SectionPanel(
+        title: 'Stock by Project',
+        child: Text(stockByType.error.toString()),
+      );
+    }
+
+    if (trayTypes.hasError) {
+      return SectionPanel(
+        title: 'Stock by Project',
+        child: Text(trayTypes.error.toString()),
+      );
+    }
+
+    final summary = ProjectStockSummaryBuilder.build(
+      stockByType.valueOrNull?.cast() ?? const [],
+      trayTypes.valueOrNull ?? const <TrayType>[],
+    );
+    final filtered = summary
+        .where((item) => item.project.toLowerCase().contains(query))
+        .toList();
+
+    return SectionPanel(
+      title: 'Stock by Project',
+      child: DataTable(
+        columns: const [
+          DataColumn(label: Text('Project')),
+          DataColumn(label: Text('Total')),
+        ],
+        rows: filtered
+            .map(
+              (item) => DataRow(
+                cells: [
+                  DataCell(Text(item.project)),
+                  DataCell(Text('${item.total}')),
+                ],
+              ),
+            )
+            .toList(),
       ),
     );
   }

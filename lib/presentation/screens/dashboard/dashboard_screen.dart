@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/date_time_formatter.dart';
+import '../../../domain/entities/tray_type.dart';
 import '../../providers/app_providers.dart';
+import '../../utils/project_stock_summary.dart';
 import '../../widgets/kpi_card.dart';
 import '../../widgets/module_page.dart';
 import '../../widgets/section_panel.dart';
@@ -24,6 +26,7 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboard = ref.watch(dashboardSnapshotProvider);
     final pendingMovements = ref.watch(pendingMovementsProvider);
+    final trayTypes = ref.watch(trayTypesProvider);
 
     return RefreshIndicator(
       onRefresh: () => _refresh(ref),
@@ -184,21 +187,10 @@ class DashboardScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               SectionPanel(
-                title: 'Stock by Tray Type',
-                child: Column(
-                  children: snapshot.stockByTrayType.isEmpty
-                      ? const [
-                          ListTile(title: Text('No stock data available.')),
-                        ]
-                      : snapshot.stockByTrayType
-                            .map(
-                              (stock) => ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                title: Text(stock.trayTypeName),
-                                trailing: Text('${stock.total}'),
-                              ),
-                            )
-                            .toList(),
+                title: 'Stock by Project',
+                child: _ProjectStockList(
+                  stockItems: snapshot.stockByTrayType,
+                  trayTypes: trayTypes,
                 ),
               ),
             ],
@@ -227,6 +219,48 @@ class DashboardScreen extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ProjectStockList extends StatelessWidget {
+  const _ProjectStockList({required this.stockItems, required this.trayTypes});
+
+  final List<dynamic> stockItems;
+  final AsyncValue<List<TrayType>> trayTypes;
+
+  @override
+  Widget build(BuildContext context) {
+    return trayTypes.when(
+      data: (items) {
+        final summary = ProjectStockSummaryBuilder.build(
+          stockItems.cast(),
+          items,
+        );
+        if (summary.isEmpty) {
+          return const ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text('No stock data available.'),
+          );
+        }
+
+        return Column(
+          children: summary
+              .map(
+                (stock) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(stock.project),
+                  trailing: Text('${stock.total}'),
+                ),
+              )
+              .toList(),
+        );
+      },
+      loading: () => const Padding(
+        padding: EdgeInsets.all(24),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => Text(error.toString()),
     );
   }
 }

@@ -19,6 +19,15 @@ class _RfidRegistrationScreenState
   int? _trayTypeId;
   int? _locationId;
 
+  Widget _dropdownLabel(String value) {
+    return Text(
+      value,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      softWrap: false,
+    );
+  }
+
   Future<void> _scanRfid() async {
     final controller = TextEditingController();
     final epcs = await showDialog<String>(
@@ -101,12 +110,13 @@ class _RfidRegistrationScreenState
               trayTypes.when(
                 data: (items) => DropdownButtonFormField<int>(
                   initialValue: _trayTypeId,
+                  isExpanded: true,
                   decoration: const InputDecoration(labelText: 'Tray Type'),
                   items: items
                       .map(
                         (trayType) => DropdownMenuItem<int>(
                           value: trayType.id,
-                          child: Text(trayType.name),
+                          child: _dropdownLabel(trayType.name),
                         ),
                       )
                       .toList(),
@@ -119,6 +129,7 @@ class _RfidRegistrationScreenState
               locations.when(
                 data: (items) => DropdownButtonFormField<int>(
                   initialValue: _locationId,
+                  isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Initial Location',
                   ),
@@ -126,7 +137,7 @@ class _RfidRegistrationScreenState
                       .map(
                         (location) => DropdownMenuItem<int>(
                           value: location.id,
-                          child: Text(location.name),
+                          child: _dropdownLabel(location.name),
                         ),
                       )
                       .toList(),
@@ -166,7 +177,11 @@ class _RfidRegistrationScreenState
                 (epc) => Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   child: ListTile(
-                    title: Text(epc),
+                    title: Text(
+                      epc,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     trailing: IconButton(
                       onPressed: () => ref
                           .read(registrationControllerProvider.notifier)
