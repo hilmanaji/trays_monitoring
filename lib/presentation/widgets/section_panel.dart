@@ -34,7 +34,7 @@ class SectionPanel extends StatelessWidget {
                   constraints: const BoxConstraints(minWidth: 0, maxWidth: 420),
                   child: Text(title, style: theme.textTheme.titleLarge),
                 ),
-                if (trailing != null) trailing!,
+                ?trailing,
               ],
             ),
             const SizedBox(height: 16),

@@ -3,7 +3,8 @@ import 'package:flutter/foundation.dart';
 class ApiConstants {
   const ApiConstants._();
 
-  static const String _defaultServerUrl = 'http://access-siix.test:8080';
+  // static const String _defaultServerUrl = 'http://access-siix.test:8080';
+  static const String _defaultServerUrl = 'http://192.168.62.38';
   static const String _androidEmulatorServerUrl = 'http://10.0.2.2:8080';
 
   static const String _serverUrlFromEnvironment = String.fromEnvironment(
