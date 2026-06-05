@@ -73,16 +73,16 @@ class UrovoDT50RfidScanner implements RFIDScannerInterface {
   }
 
   void _handleNativeEvent(dynamic event) {
+    // Map events without an 'epc' key are module-status / battery-info
+    // notifications — skip them so they never enter the EPC stream.
     final normalized = switch (event) {
       final String value => value.trim().toUpperCase(),
-      final Map<dynamic, dynamic> value =>
+      final Map<dynamic, dynamic> value when value.containsKey('epc') =>
         (value['epc']?.toString() ?? '').trim().toUpperCase(),
       _ => '',
     };
 
-    if (normalized.isEmpty) {
-      return;
-    }
+    if (normalized.isEmpty) return;
 
     _controller.add(normalized);
   }

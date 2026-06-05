@@ -1,11 +1,9 @@
-import 'package:flutter/foundation.dart';
 
 class ApiConstants {
   const ApiConstants._();
 
   // static const String _defaultServerUrl = 'http://access-siix.test:8080';
   static const String _defaultServerUrl = 'http://192.168.62.38';
-  static const String _androidEmulatorServerUrl = 'http://10.0.2.2:8080';
 
   static const String _serverUrlFromEnvironment = String.fromEnvironment(
     'API_SERVER_URL',
@@ -19,10 +17,6 @@ class ApiConstants {
   static String get serverUrl {
     if (_serverUrlFromEnvironment.isNotEmpty) {
       return _serverUrlFromEnvironment;
-    }
-
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return _androidEmulatorServerUrl;
     }
 
     return _defaultServerUrl;
@@ -48,23 +42,7 @@ class ApiConstants {
     return '$serverUrl$apiPathPrefix';
   }
 
-  static String? get hostHeaderOverride {
-    final isDefaultAndroidEmulatorRoute =
-        !kIsWeb &&
-        defaultTargetPlatform == TargetPlatform.android &&
-        _serverUrlFromEnvironment.isEmpty &&
-        _baseUrlFromEnvironment.isEmpty;
-
-    if (!isDefaultAndroidEmulatorRoute) {
-      return null;
-    }
-
-    if (serverUrl != _androidEmulatorServerUrl) {
-      return null;
-    }
-
-    return Uri.parse(_defaultServerUrl).authority;
-  }
+  static String? get hostHeaderOverride => null;
 
   static const Duration connectTimeout = Duration(seconds: 20);
   static const Duration receiveTimeout = Duration(seconds: 20);

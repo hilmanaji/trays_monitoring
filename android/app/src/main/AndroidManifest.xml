@@ -1,6 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Required for UROVO DT50 serial-port RFID SDK to open /dev/ttyUSB* -->
+    <uses-permission android:name="android.permission.SERIAL_PORT" />
+    <!-- Required on Android 12+ to receive RFID broadcast intents from the
+         UROVO system RFID service while the app is in the foreground. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:label="trays_monitoring"
