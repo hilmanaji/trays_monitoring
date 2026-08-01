@@ -9,9 +9,11 @@ import '../../providers/movement_form_controller.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_theme.dart';
+import '../../theme/neo_theme.dart';
 import '../../widgets/bottom_action_bar.dart';
 import '../../widgets/counter_display.dart';
 import '../../widgets/empty_state_widget.dart';
+import '../../widgets/neo_box.dart';
 import '../../widgets/tray_card.dart';
 
 class TrayMovementScreen extends ConsumerStatefulWidget {
@@ -30,8 +32,8 @@ class _TrayMovementScreenState extends ConsumerState<TrayMovementScreen> {
   Widget build(BuildContext context) {
     final formState = ref.watch(movementFormControllerProvider);
     final locations = ref.watch(locationsProvider);
-    final theme     = Theme.of(context);
-    final cs        = theme.extension<AppColorScheme>()!;
+    final neo       = context.neo;
+    final hasTags   = formState.rfids.isNotEmpty;
 
     // Trigger flash whenever tag count increases
     final currentCount = formState.rfids.length;
@@ -40,7 +42,7 @@ class _TrayMovementScreenState extends ConsumerState<TrayMovementScreen> {
     }
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: neo.ground,
       body: Column(
         children: [
           // ── Scan header (counter + status) ─────────────────────────────────
@@ -59,24 +61,49 @@ class _TrayMovementScreenState extends ConsumerState<TrayMovementScreen> {
               onFromChanged: (v) => setState(() => _fromLocationId = v),
               onToChanged:   (v) => setState(() => _toLocationId = v),
             ),
-            loading: () => const LinearProgressIndicator(),
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: LinearProgressIndicator(),
+            ),
             error: (e, _) => _LocationError(message: e.toString()),
           ),
 
-          Divider(height: 1, color: theme.colorScheme.outline),
-
           // ── Tag list ───────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+            child: Row(
+              children: [
+                const NeoKicker('Terbaca / tags read'),
+                const SizedBox(width: 9),
+                NeoCountBadge(count: formState.rfids.length),
+                const Spacer(),
+                if (hasTags)
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _confirmClear(context),
+                    child: Text(
+                      'Kosongkan',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: neo.accentEnd,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
           Expanded(
             child: ScanFlashOverlay(
               triggerKey: formState.rfids.length,
-              child: formState.rfids.isEmpty
-                  ? _EmptyScanState(isScanning: formState.isScanning)
-                  : _TagList(
+              child: hasTags
+                  ? _TagList(
                       rfids: formState.rfids,
                       onRemove: (epc) => ref
                           .read(movementFormControllerProvider.notifier)
                           .removeTag(epc),
-                    ),
+                    )
+                  : _EmptyScanState(isScanning: formState.isScanning),
             ),
           ),
 
@@ -98,60 +125,33 @@ class _TrayMovementScreenState extends ConsumerState<TrayMovementScreen> {
                   .clearMessages(),
             ),
 
-          // ── Bottom action bar ──────────────────────────────────────────────
+          // ── Trigger + commit bar ───────────────────────────────────────────
+          // Mirrors the hardware layout: latching trigger on the left, the one
+          // accent-gradient commit action filling the rest.
           BottomActionBar(
-            tertiary: OutlinedButton.icon(
-              onPressed: formState.rfids.isEmpty
-                  ? null
-                  : () => _confirmClear(context),
-              icon: const Icon(Icons.clear_all_rounded, size: 20),
-              label: const Text('Clear'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: theme.colorScheme.error,
-                side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.5)),
-                padding: EdgeInsets.zero,
-              ),
+            tertiary: NeoTriggerButton(
+              scanning: formState.isScanning,
+              onTap: () {
+                final ctrl = ref.read(movementFormControllerProvider.notifier);
+                if (formState.isScanning) {
+                  ctrl.stopScan();
+                } else {
+                  ctrl.startScan();
+                }
+              },
             ),
-            secondary: OutlinedButton.icon(
+            secondary: NeoSecondaryButton(
+              label: 'Manual',
+              icon: Icons.keyboard_rounded,
               onPressed: () => _showManualInput(context),
-              icon: const Icon(Icons.keyboard_rounded, size: 20),
-              label: const Text('Manual'),
-              style: OutlinedButton.styleFrom(padding: EdgeInsets.zero),
             ),
-            primary: formState.isScanning
-                ? FilledButton.icon(
-                    onPressed: () => ref
-                        .read(movementFormControllerProvider.notifier)
-                        .stopScan(),
-                    icon: const Icon(Icons.stop_rounded, size: 22),
-                    label: const Text('Stop'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: cs.statusError,
-                      padding: EdgeInsets.zero,
-                    ),
-                  )
-                : FilledButton.icon(
-                    onPressed: formState.rfids.isNotEmpty
-                        ? () => _confirmSubmit(context)
-                        : () => ref
-                            .read(movementFormControllerProvider.notifier)
-                            .startScan(),
-                    icon: Icon(
-                      formState.rfids.isNotEmpty
-                          ? Icons.send_rounded
-                          : Icons.sensors_rounded,
-                      size: 22,
-                    ),
-                    label: Text(
-                      formState.rfids.isNotEmpty ? 'Submit' : 'Start Scan',
-                    ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: formState.rfids.isNotEmpty
-                          ? cs.statusOk
-                          : theme.colorScheme.primary,
-                      padding: EdgeInsets.zero,
-                    ),
-                  ),
+            primary: NeoButton(
+              label: hasTags
+                  ? 'Pindahkan ${formState.rfids.length} tray'
+                  : 'Belum ada tag',
+              icon: hasTags ? Icons.send_rounded : null,
+              onPressed: hasTags ? () => _confirmSubmit(context) : null,
+            ),
           ),
         ],
       ),
@@ -322,55 +322,52 @@ class _ScanHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs    = theme.extension<AppColorScheme>()!;
+    final cs  = Theme.of(context).extension<AppColorScheme>()!;
+    final neo = context.neo;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        vertical: AppSpacing.lg,
-        horizontal: AppSpacing.md,
-      ),
-      decoration: BoxDecoration(
-        color: cs.surfaceCard,
-        border: Border(
-          bottom: BorderSide(color: theme.colorScheme.outline),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: CounterDisplay(
-              count: count,
-              label: 'TAGS SCANNED',
-              sublabel: 'unique EPCs in session',
-              color: isScanning ? cs.statusActive : theme.colorScheme.primary,
-              size: CounterSize.large,
-              isActive: isScanning,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: NeoBox(
+        radius: AppSpacing.radiusNeo + 2,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: CounterDisplay(
+                  count: count,
+                  label: 'Tags scanned',
+                  sublabel: 'EPC unik dalam sesi ini',
+                  color: neo.ink,
+                  size: CounterSize.large,
+                  isActive: isScanning,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              _StatPill(
-                icon: Icons.fiber_new_rounded,
-                label: '$count new',
-                color: cs.statusOk,
-              ),
-              const SizedBox(height: 6),
-              _StatPill(
-                icon: isScanning
-                    ? Icons.radio_button_checked_rounded
-                    : Icons.radio_button_unchecked_rounded,
-                label: isScanning ? 'Live' : 'Stopped',
-                color: isScanning ? cs.statusActive : cs.statusIdle,
-              ),
-            ],
-          ),
-        ],
+            const SizedBox(width: AppSpacing.md),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _StatPill(
+                  icon: isScanning
+                      ? Icons.radio_button_checked_rounded
+                      : Icons.radio_button_unchecked_rounded,
+                  label: isScanning ? 'Live' : 'Idle',
+                  color: isScanning ? cs.statusActive : neo.inkMuted,
+                ),
+                const SizedBox(height: 8),
+                _StatPill(
+                  icon: Icons.podcasts_rounded,
+                  label: '26 dBm',
+                  color: neo.inkMuted,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -384,20 +381,25 @@ class _StatPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: color),
-        const SizedBox(width: 5),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: color,
+    return NeoBox.inset(
+      radius: 12,
+      elevation: 0.5,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -421,43 +423,113 @@ class _LocationBar extends StatelessWidget {
   final ValueChanged<int?> onFromChanged;
   final ValueChanged<int?> onToChanged;
 
+  String _nameFor(int? id) {
+    if (id == null) return 'Pilih…';
+    for (final loc in locations) {
+      if (loc.id == id) return loc.name as String;
+    }
+    return 'Pilih…';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs    = theme.extension<AppColorScheme>()!;
+    final neo = context.neo;
 
-    return Container(
-      color: cs.surfaceCard,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
+    // FROM is a well (given), TO is the accent surface (the decision) — the
+    // same asymmetry the design uses to point the operator at the next step.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 2),
       child: Row(
         children: [
           Expanded(
-            child: _LocationDropdown(
-              label: 'FROM',
-              value: fromId,
-              locations: locations,
-              icon: Icons.north_east_rounded,
-              onChanged: onFromChanged,
+            child: _LocationSlot(
+              kicker: 'DARI / FROM',
+              value: _nameFor(fromId),
+              accent: false,
+              onTap: () => _pick(context, fromId, onFromChanged, 'Ambil dari mana?'),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Icon(
-              Icons.arrow_forward_rounded,
-              size: 20,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Icon(Icons.arrow_forward_rounded, size: 17, color: neo.accentEnd),
           ),
           Expanded(
-            child: _LocationDropdown(
-              label: 'TO',
-              value: toId,
-              locations: locations,
-              icon: Icons.south_west_rounded,
-              onChanged: onToChanged,
+            child: _LocationSlot(
+              kicker: 'KE / TO',
+              value: _nameFor(toId),
+              accent: true,
+              onTap: () => _pick(context, toId, onToChanged, 'Pindah ke mana?'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pick(
+    BuildContext context,
+    int? current,
+    ValueChanged<int?> onChanged,
+    String title,
+  ) async {
+    final picked = await showModalBottomSheet<int>(
+      context: context,
+      builder: (ctx) => _LocationSheet(
+        title: title,
+        locations: locations,
+        selectedId: current,
+      ),
+    );
+    if (picked != null) onChanged(picked);
+  }
+}
+
+class _LocationSlot extends StatelessWidget {
+  const _LocationSlot({
+    required this.kicker,
+    required this.value,
+    required this.accent,
+    required this.onTap,
+  });
+
+  final String kicker;
+  final String value;
+  final bool accent;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final neo = context.neo;
+    final fg  = accent ? neo.onAccent : neo.ink;
+
+    return NeoBox(
+      depth: accent ? NeoDepth.accent : NeoDepth.inset,
+      radius: AppSpacing.radiusNeo,
+      elevation: 0.8,
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            accent ? '$kicker ▾' : kicker,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.3,
+              color: accent ? fg.withValues(alpha: 0.8) : neo.inkFaint,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: fg,
             ),
           ),
         ],
@@ -466,69 +538,86 @@ class _LocationBar extends StatelessWidget {
   }
 }
 
-class _LocationDropdown extends StatelessWidget {
-  const _LocationDropdown({
-    required this.label,
-    required this.value,
+/// Bottom-sheet location picker — the design's "Pindah ke mana?" dialog.
+class _LocationSheet extends StatelessWidget {
+  const _LocationSheet({
+    required this.title,
     required this.locations,
-    required this.icon,
-    required this.onChanged,
+    required this.selectedId,
   });
 
-  final String label;
-  final int? value;
+  final String title;
   final List<dynamic> locations;
-  final IconData icon;
-  final ValueChanged<int?> onChanged;
+  final int? selectedId;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isSelected = value != null;
+    final neo = context.neo;
 
-    return DropdownButtonFormField<int>(
-      initialValue: value,
-      isExpanded: true,
-      decoration: InputDecoration(
-        labelText: label,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        prefixIcon: Icon(
-          icon,
-          size: 18,
-          color: isSelected
-              ? theme.colorScheme.primary
-              : theme.colorScheme.onSurface.withValues(alpha: 0.4),
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          borderSide: BorderSide(
-            color: isSelected
-                ? theme.colorScheme.primary
-                : theme.colorScheme.outline,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          borderSide: BorderSide(
-            color: isSelected
-                ? theme.colorScheme.primary.withValues(alpha: 0.6)
-                : theme.colorScheme.outline,
-          ),
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 4, 18, 18),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: neo.ink,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Pilih lokasi dari master data.',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w500,
+                color: neo.inkMuted,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: locations.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 9),
+                itemBuilder: (context, i) {
+                  final loc = locations[i];
+                  final selected = loc.id == selectedId;
+                  return NeoBox(
+                    depth: selected ? NeoDepth.accent : NeoDepth.raised,
+                    radius: AppSpacing.radiusNeoSm + 2,
+                    elevation: 0.7,
+                    height: 50,
+                    onTap: () => Navigator.pop(context, loc.id as int),
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            loc.name as String,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: selected ? neo.onAccent : neo.ink,
+                            ),
+                          ),
+                        ),
+                        if (selected)
+                          Icon(Icons.check_rounded, size: 18, color: neo.onAccent),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
-      items: [
-        const DropdownMenuItem<int>(value: null, child: Text('Select…')),
-        ...locations.map<DropdownMenuItem<int>>(
-          (loc) => DropdownMenuItem<int>(
-            value: loc.id as int,
-            child: Text(
-              loc.name as String,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ),
-      ],
-      onChanged: onChanged,
     );
   }
 }
@@ -589,47 +678,7 @@ class _EmptyScanState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isScanning) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: AppSpacing.xxl),
-            Icon(
-              Icons.sensors_rounded,
-              size: 64,
-              color: Theme.of(context)
-                  .colorScheme
-                  .primary
-                  .withValues(alpha: 0.25),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Waiting for tags…',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.4),
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Point the scanner at RFID tags\nor press the physical trigger button',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
-      );
-    }
-
-    return EmptyStateWidget(
-      icon: Icons.sensors_outlined,
-      title: 'No tags scanned',
-      subtitle:
-          'Press Start Scan or use the physical\ntrigger button to begin scanning',
-    );
+    return ScanIdleState(scanning: isScanning);
   }
 }
 
@@ -650,38 +699,43 @@ class _MessageBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).extension<AppColorScheme>()!;
-    final bg = isError ? cs.statusErrorContainer : cs.statusOkContainer;
-    final fg = isError ? cs.statusErrorOnContainer : cs.statusOkOnContainer;
-    final icon = isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded;
+    final cs  = Theme.of(context).extension<AppColorScheme>()!;
+    final neo = context.neo;
+    final accent = isError ? cs.statusError : cs.statusOk;
+    final icon = isError
+        ? Icons.error_outline_rounded
+        : Icons.check_circle_outline_rounded;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm + 2,
-      ),
-      color: bg,
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: fg),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: fg,
+    // Floating toast, matching the design: ground-coloured card lifted off the
+    // surface, with the status carried by the glyph alone.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      child: NeoBox(
+        radius: AppSpacing.radiusNeo,
+        elevation: 1.2,
+        padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: accent),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: neo.ink,
+                ),
               ),
             ),
-          ),
-          IconButton(
-            onPressed: onDismiss,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            icon: Icon(Icons.close_rounded, size: 16, color: fg),
-          ),
-        ],
+            IconButton(
+              onPressed: onDismiss,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              icon: Icon(Icons.close_rounded, size: 16, color: neo.inkGhost),
+            ),
+          ],
+        ),
       ),
     );
   }

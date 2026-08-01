@@ -24,6 +24,15 @@ abstract final class AppSpacing {
   static const double radiusXl  = 24.0;
   static const double radiusXxl = 32.0;
 
+  // ── Neomorphic radii ──────────────────────────────────────────────────────
+  // Soft UI needs generous corners so the shadow pair can wrap the edge.
+  /// Chips, tabs, small badges.
+  static const double radiusNeoSm = 15.0;
+  /// Default for cards, fields and buttons.
+  static const double radiusNeo   = 20.0;
+  /// Panels, sheets and full-bleed containers.
+  static const double radiusNeoLg = 26.0;
+
   // ── Layout ────────────────────────────────────────────────────────────────
   static const double screenPadding = 16.0;
   static const double cardPadding   = 20.0;

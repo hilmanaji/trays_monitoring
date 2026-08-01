@@ -8,7 +8,9 @@ import '../../providers/app_providers.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_theme.dart';
+import '../../theme/neo_theme.dart';
 import '../../widgets/bottom_action_bar.dart';
+import '../../widgets/neo_box.dart';
 import '../../widgets/signal_strength_meter.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -298,9 +300,8 @@ class _TargetBar extends StatelessWidget {
     final cs    = theme.extension<AppColorScheme>()!;
     final hasTarget = targetEpc != null;
 
-    return Container(
+    return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
-      color: cs.surfaceCard,
       child: Row(
         children: [
           Expanded(
@@ -333,18 +334,21 @@ class _TargetBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
-          SizedBox(
+          NeoBox.accent(
             width: AppSpacing.touchMin,
             height: AppSpacing.touchMin,
-            child: FilledButton(
-              onPressed: () {
-                if (controller.text.trim().isNotEmpty) {
-                  onSet(controller.text.trim());
-                  FocusScope.of(context).unfocus();
-                }
-              },
-              style: FilledButton.styleFrom(padding: EdgeInsets.zero),
-              child: const Icon(Icons.search_rounded),
+            radius: AppSpacing.radiusNeoSm,
+            alignment: Alignment.center,
+            onTap: () {
+              if (controller.text.trim().isNotEmpty) {
+                onSet(controller.text.trim());
+                FocusScope.of(context).unfocus();
+              }
+            },
+            child: Icon(
+              Icons.search_rounded,
+              size: 22,
+              color: context.neo.onAccent,
             ),
           ),
         ],
@@ -371,8 +375,8 @@ class _NearbyList extends StatelessWidget {
     return Container(
       constraints: const BoxConstraints(maxHeight: 200),
       decoration: BoxDecoration(
-        color: cs.surfaceCard,
-        border: Border(top: BorderSide(color: theme.colorScheme.outline)),
+        color: context.neo.ground,
+        border: Border(top: BorderSide(color: context.neo.track)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

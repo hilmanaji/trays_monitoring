@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/neo_theme.dart';
+import 'neo_box.dart';
 
 /// Horizontal bar RSSI meter — used in list tiles and the Find screen header.
 class SignalStrengthMeter extends StatelessWidget {
@@ -48,8 +50,12 @@ class SignalStrengthMeter extends StatelessWidget {
               ),
             ),
           ),
-        SizedBox(
+        // Inset track so the level reads as liquid filling a groove.
+        NeoBox.inset(
           height: height,
+          radius: height / 2,
+          elevation: 0.5,
+          padding: const EdgeInsets.all(3),
           child: CustomPaint(
             painter: _BarPainter(rssi: rssi, color: _color),
             child: const SizedBox.expand(),
@@ -68,21 +74,13 @@ class _BarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final radius = Radius.circular(size.height / 2);
-    final bgPaint = Paint()
-      ..color = color.withValues(alpha: 0.15)
-      ..style = PaintingStyle.fill;
     final fgPaint = Paint()
       ..style = PaintingStyle.fill
       ..shader = LinearGradient(
         colors: [color.withValues(alpha: 0.6), color],
       ).createShader(Rect.fromLTWH(0, 0, size.width * rssi, size.height));
 
-    final bg = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      radius,
-    );
-    canvas.drawRRect(bg, bgPaint);
-
+    // The track is drawn by the surrounding inset NeoBox; only the fill here.
     if (rssi > 0.01) {
       final fg = RRect.fromRectAndRadius(
         Rect.fromLTWH(0, 0, size.width * rssi.clamp(0.0, 1.0), size.height),
@@ -158,7 +156,7 @@ class _GeigerMeterState extends State<GeigerMeter>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final neo = context.neo;
 
     return AnimatedBuilder(
       animation: _ctrl,
@@ -170,7 +168,7 @@ class _GeigerMeterState extends State<GeigerMeter>
           child: Stack(
             alignment: Alignment.center,
             children: [
-              // Outer pulse ring
+              // Outer pulse ring — proximity is read from its cadence.
               if (widget.rssi > 0.05)
                 Container(
                   width: 260 + t * 40,
@@ -183,68 +181,56 @@ class _GeigerMeterState extends State<GeigerMeter>
                     ),
                   ),
                 ),
-              // Inner fill circle
-              Container(
-                width: 220,
-                height: 220,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _color.withValues(
-                    alpha: 0.06 + t * 0.06 * widget.rssi,
-                  ),
-                  border: Border.all(
-                    color: _color.withValues(alpha: 0.25 + widget.rssi * 0.45),
-                    width: 3,
-                  ),
-                ),
-              ),
-              // Content
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    widget.isActive
-                        ? Icons.sensors_rounded
-                        : Icons.sensors_off_rounded,
-                    size: 44,
-                    color: _color.withValues(alpha: 0.7 + t * 0.3),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    widget.rssi > 0.01
-                        ? '${(widget.rssi * 100).round()}%'
-                        : '—',
-                    style: TextStyle(
-                      fontSize: 52,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -2,
-                      height: 1.0,
-                      color: _color,
+              // The dial is a well pressed into the ground…
+              const NeoBox.inset(width: 250, height: 250, radius: 125),
+              // …holding a raised disc that carries the reading.
+              NeoBox(
+                width: 200,
+                height: 200,
+                radius: 100,
+                elevation: 0.9,
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      widget.isActive
+                          ? Icons.sensors_rounded
+                          : Icons.sensors_off_rounded,
+                      size: 40,
+                      color: _color.withValues(alpha: 0.7 + t * 0.3),
                     ),
-                  ),
-                  if (widget.targetEpc != null) ...[
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4,
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.rssi > 0.01
+                          ? '${(widget.rssi * 100).round()}%'
+                          : '—',
+                      style: TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -2,
+                        height: 1.0,
+                        color: neo.ink,
                       ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surface.withValues(alpha: 0.8),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        widget.targetEpc!,
-                        style: TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 11,
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.55),
+                    ),
+                    if (widget.targetEpc != null) ...[
+                      const SizedBox(height: 6),
+                      SizedBox(
+                        width: 150,
+                        child: Text(
+                          widget.targetEpc!,
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 10.5,
+                            color: neo.inkMuted,
+                          ),
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ],
           ),

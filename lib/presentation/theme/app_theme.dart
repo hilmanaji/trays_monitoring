@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_colors.dart';
 import 'app_spacing.dart';
+import 'neo_theme.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Semantic color extension
@@ -68,19 +69,21 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     statusWarning: AppColors.amber500,
     statusWarningContainer: AppColors.amberLight,
     statusWarningOnContainer: AppColors.amber700,
-    statusIdle: AppColors.slate600,
-    statusIdleContainer: AppColors.slateLight,
-    statusIdleOnContainer: AppColors.slate600,
-    statusActive: AppColors.blue500,
-    statusActiveContainer: AppColors.blueLight,
-    statusActiveOnContainer: AppColors.blue500,
-    surfaceCard: Color(0xFFFFFFFF),
-    surfaceElevated: Color(0xFFF5F8FF),
-    divider: AppColors.neutral100,
-    scanPulse: AppColors.green500,
-    tagListBg: Color(0xFFF7FAFF),
-    headerGradientStart: Color(0xFF0E3E86),
-    headerGradientEnd: Color(0xFF1E7BFF),
+    statusIdle: AppColors.neoInkMuted,
+    statusIdleContainer: AppColors.neoGround,
+    statusIdleOnContainer: AppColors.neoInkMuted,
+    statusActive: AppColors.neoAccentEnd,
+    statusActiveContainer: Color(0xFFDFE7F1),
+    statusActiveOnContainer: AppColors.neoAccentEnd,
+    // Soft UI: every surface is the one ground colour — depth comes from the
+    // NeoBox shadow pair, never from a lighter/darker fill.
+    surfaceCard: AppColors.neoGround,
+    surfaceElevated: AppColors.neoGround,
+    divider: AppColors.neoTrack,
+    scanPulse: AppColors.neoAccentEnd,
+    tagListBg: AppColors.neoGround,
+    headerGradientStart: AppColors.neoAccentStart,
+    headerGradientEnd: AppColors.neoAccentEnd,
   );
 
   static const dark = AppColorScheme(
@@ -93,19 +96,19 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
     statusWarning: AppColors.amber500,
     statusWarningContainer: AppColors.amber900,
     statusWarningOnContainer: AppColors.amber500,
-    statusIdle: AppColors.slate400,
-    statusIdleContainer: AppColors.slateDark,
-    statusIdleOnContainer: AppColors.slate400,
-    statusActive: AppColors.blue400,
-    statusActiveContainer: AppColors.blue900,
-    statusActiveOnContainer: AppColors.blue400,
-    surfaceCard: AppColors.neutral800,
-    surfaceElevated: AppColors.neutral700,
-    divider: AppColors.neutral600,
-    scanPulse: AppColors.green500,
-    tagListBg: AppColors.neutral850,
-    headerGradientStart: Color(0xFF0A2447),
-    headerGradientEnd: Color(0xFF1053A8),
+    statusIdle: AppColors.neoInkMutedDark,
+    statusIdleContainer: AppColors.neoGroundDark,
+    statusIdleOnContainer: AppColors.neoInkMutedDark,
+    statusActive: AppColors.neoAccentDim,
+    statusActiveContainer: Color(0xFF2E3742),
+    statusActiveOnContainer: AppColors.neoAccentDim,
+    surfaceCard: AppColors.neoGroundDark,
+    surfaceElevated: AppColors.neoGroundDark,
+    divider: AppColors.neoTrackDark,
+    scanPulse: AppColors.neoAccentDim,
+    tagListBg: AppColors.neoGroundDark,
+    headerGradientStart: AppColors.neoAccentStart,
+    headerGradientEnd: AppColors.neoAccentEnd,
   );
 
   @override
@@ -183,49 +186,56 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
 class AppTheme {
   const AppTheme._();
 
+  /// The design specifies Manrope (400–800). It is not bundled, so the app
+  /// falls back to the platform sans by default. To adopt it: drop the TTFs in
+  /// `assets/fonts/`, declare the family in `pubspec.yaml`, and set this to
+  /// `'Manrope'` — nothing else in the theme needs to change.
+  static const String? fontFamily = null;
+
   static ThemeData light() => _build(Brightness.light);
   static ThemeData dark()  => _build(Brightness.dark);
 
   static ThemeData _build(Brightness brightness) {
     final isDark = brightness == Brightness.dark;
-    final cs = isDark ? AppColorScheme.dark : AppColorScheme.light;
+    final cs  = isDark ? AppColorScheme.dark : AppColorScheme.light;
+    final neo = isDark ? NeoScheme.dark : NeoScheme.light;
 
-    final bg       = isDark ? AppColors.neutral900 : AppColors.neutral50;
-    final surface  = isDark ? AppColors.neutral800 : const Color(0xFFFFFFFF);
-    final onSurface = isDark ? AppColors.neutral100 : AppColors.neutral900;
-    final primary  = isDark ? AppColors.primary400  : AppColors.primary500;
-    final onPrimary = isDark ? AppColors.neutral900 : const Color(0xFFFFFFFF);
+    // Soft UI: one ground colour for the scaffold *and* every surface on it.
+    final bg        = neo.ground;
+    final surface   = neo.ground;
+    final onSurface = neo.ink;
+    final primary   = isDark ? AppColors.neoAccentDim : AppColors.neoAccentEnd;
+    final onPrimary = neo.onAccent;
 
     final colorScheme = ColorScheme(
       brightness: brightness,
       primary: primary,
       onPrimary: onPrimary,
-      primaryContainer: isDark ? AppColors.primary700 : AppColors.blueLight,
-      onPrimaryContainer: isDark ? AppColors.primary400 : AppColors.primary600,
-      secondary: isDark ? AppColors.neutral300 : AppColors.neutral500,
-      onSecondary: isDark ? AppColors.neutral900 : const Color(0xFFFFFFFF),
-      secondaryContainer: isDark ? AppColors.neutral700 : AppColors.neutral100,
-      onSecondaryContainer: isDark ? AppColors.neutral200 : AppColors.neutral600,
+      primaryContainer: isDark ? const Color(0xFF2E3742) : const Color(0xFFDFE7F1),
+      onPrimaryContainer: isDark ? AppColors.neoAccentDim : AppColors.neoAccentEnd,
+      secondary: neo.inkMuted,
+      onSecondary: neo.onAccent,
+      secondaryContainer: neo.ground,
+      onSecondaryContainer: neo.inkMuted,
       error: AppColors.red500,
       onError: const Color(0xFFFFFFFF),
       errorContainer: isDark ? AppColors.red900 : AppColors.redLight,
       onErrorContainer: isDark ? AppColors.red500 : AppColors.red700,
       surface: surface,
       onSurface: onSurface,
-      surfaceContainerHighest: isDark ? AppColors.neutral700 : AppColors.neutral100,
-      surfaceContainerHigh: isDark ? AppColors.neutral750 : const Color(0xFFE8EFF8),
-      surfaceContainer: isDark ? AppColors.neutral800 : const Color(0xFFFFFFFF),
-      surfaceContainerLow: isDark ? AppColors.neutral800 : const Color(0xFFF5F8FF),
-      surfaceContainerLowest: isDark ? AppColors.neutral900 : AppColors.neutral50,
-      outline: isDark ? AppColors.neutral600 : AppColors.neutral100,
-      outlineVariant: isDark ? AppColors.neutral700 : const Color(0xFFE0E9F5),
-      scrim: const Color(0x99000000),
-      inverseSurface: isDark ? const Color(0xFFFFFFFF) : AppColors.neutral900,
-      onInverseSurface: isDark ? AppColors.neutral900 : AppColors.neutral50,
-      inversePrimary: isDark ? AppColors.primary600 : AppColors.primary400,
-      shadow: isDark
-          ? const Color(0x66000000)
-          : const Color(0x14000000),
+      // Every container level collapses onto the ground — see NeoBox.
+      surfaceContainerHighest: neo.ground,
+      surfaceContainerHigh: neo.ground,
+      surfaceContainer: neo.ground,
+      surfaceContainerLow: neo.ground,
+      surfaceContainerLowest: neo.ground,
+      outline: neo.track,
+      outlineVariant: neo.track,
+      scrim: isDark ? const Color(0x99000000) : const Color(0x522B3340),
+      inverseSurface: isDark ? neo.ink : AppColors.neoInk,
+      onInverseSurface: neo.ground,
+      inversePrimary: AppColors.neoAccentStart,
+      shadow: neo.shadowDark,
     );
 
     return ThemeData(
@@ -233,7 +243,9 @@ class AppTheme {
       brightness: brightness,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: bg,
-      extensions: <ThemeExtension<dynamic>>[cs],
+      canvasColor: neo.ground,
+      fontFamily: fontFamily,
+      extensions: <ThemeExtension<dynamic>>[cs, neo],
 
       // ── AppBar ────────────────────────────────────────────────────────────
       appBarTheme: AppBarTheme(
@@ -256,13 +268,14 @@ class AppTheme {
       ),
 
       // ── Cards ─────────────────────────────────────────────────────────────
+      // Borderless: a Card is just the ground; NeoBox supplies the depth.
       cardTheme: CardThemeData(
         elevation: 0,
         color: cs.surfaceCard,
+        shadowColor: Colors.transparent,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          side: BorderSide(color: colorScheme.outline),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusNeo),
         ),
       ),
 
@@ -273,10 +286,10 @@ class AppTheme {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           backgroundColor: primary,
           foregroundColor: onPrimary,
-          disabledBackgroundColor: colorScheme.outline,
-          disabledForegroundColor: onSurface.withValues(alpha: 0.38),
+          disabledBackgroundColor: neo.track,
+          disabledForegroundColor: neo.inkGhost,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusNeoSm),
           ),
           textStyle: const TextStyle(
             fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.1,
@@ -291,10 +304,10 @@ class AppTheme {
           minimumSize: const Size(56, AppSpacing.touchMin),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           foregroundColor: primary,
-          disabledForegroundColor: onSurface.withValues(alpha: 0.38),
-          side: BorderSide(color: colorScheme.outline),
+          disabledForegroundColor: neo.inkGhost,
+          side: BorderSide(color: neo.track, width: 1.5),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusNeoSm),
           ),
           textStyle: const TextStyle(
             fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: 0.1,
@@ -329,84 +342,99 @@ class AppTheme {
       ),
 
       // ── Navigation bar ────────────────────────────────────────────────────
+      // The mobile shell draws its own inset tab tray (see AppShell); this
+      // theme only covers the tablet NavigationRail fallback.
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: isDark ? AppColors.neutral800 : const Color(0xFFFFFFFF),
+        backgroundColor: Colors.transparent,
         height: AppSpacing.navBarH,
         elevation: 0,
-        indicatorColor: isDark
-            ? AppColors.primary700.withValues(alpha: 0.45)
-            : AppColors.blueLight,
+        indicatorColor: colorScheme.primaryContainer,
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final sel = states.contains(WidgetState.selected);
-          return IconThemeData(
-            size: 26,
-            color: sel
-                ? primary
-                : onSurface.withValues(alpha: 0.5),
-          );
+          return IconThemeData(size: 26, color: sel ? primary : neo.inkMuted);
         }),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final sel = states.contains(WidgetState.selected);
           return TextStyle(
             fontSize: 11,
             fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
-            color: sel ? primary : onSurface.withValues(alpha: 0.5),
+            color: sel ? primary : neo.inkMuted,
           );
         }),
       ),
 
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: neo.ground,
+        indicatorColor: colorScheme.primaryContainer,
+        selectedIconTheme: IconThemeData(color: primary, size: 26),
+        unselectedIconTheme: IconThemeData(color: neo.inkMuted, size: 24),
+        selectedLabelTextStyle: TextStyle(
+          fontSize: 12, fontWeight: FontWeight.w700, color: primary,
+        ),
+        unselectedLabelTextStyle: TextStyle(
+          fontSize: 12, fontWeight: FontWeight.w500, color: neo.inkMuted,
+        ),
+      ),
+
       // ── Input decoration ──────────────────────────────────────────────────
+      // Fields are wells: ground fill, hairline edge, accent only on focus.
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: isDark ? AppColors.neutral750 : const Color(0xFFFFFFFF),
+        fillColor: neo.ground,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          borderSide: BorderSide(color: colorScheme.outline),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusNeoSm),
+          borderSide: BorderSide(color: neo.track, width: 1.5),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          borderSide: BorderSide(color: colorScheme.outline),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusNeoSm),
+          borderSide: BorderSide(color: neo.track, width: 1.5),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          borderSide: BorderSide(color: primary, width: 1.5),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusNeoSm),
+          borderSide: BorderSide(color: primary, width: 1.8),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          borderSide: const BorderSide(color: AppColors.red500),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusNeoSm),
+          borderSide: const BorderSide(color: AppColors.red500, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          borderSide: const BorderSide(color: AppColors.red500, width: 1.5),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusNeoSm),
+          borderSide: const BorderSide(color: AppColors.red500, width: 1.8),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md, vertical: AppSpacing.md,
         ),
-        labelStyle: TextStyle(fontSize: 15, color: onSurface.withValues(alpha: 0.6)),
-        hintStyle: TextStyle(fontSize: 15, color: onSurface.withValues(alpha: 0.4)),
+        labelStyle: TextStyle(fontSize: 15, color: neo.inkMuted),
+        hintStyle: TextStyle(fontSize: 15, color: neo.inkGhost),
       ),
 
       // ── Chip ──────────────────────────────────────────────────────────────
       chipTheme: ChipThemeData(
+        backgroundColor: neo.ground,
         padding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.sm, vertical: AppSpacing.xs,
         ),
-        labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+        labelStyle: TextStyle(
+          fontSize: 13, fontWeight: FontWeight.w600, color: neo.inkMuted,
+        ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         ),
         side: BorderSide.none,
       ),
 
       // ── Bottom sheet ──────────────────────────────────────────────────────
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: surface,
+        backgroundColor: neo.ground,
+        surfaceTintColor: Colors.transparent,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppSpacing.radiusXl),
+            top: Radius.circular(AppSpacing.radiusNeoLg + 4),
           ),
         ),
-        elevation: 4,
+        elevation: 0,
+        showDragHandle: true,
+        dragHandleColor: neo.track,
       ),
 
       // ── Divider ───────────────────────────────────────────────────────────
@@ -418,44 +446,72 @@ class AppTheme {
 
       // ── Dialog ────────────────────────────────────────────────────────────
       dialogTheme: DialogThemeData(
-        backgroundColor: surface,
-        elevation: 8,
+        backgroundColor: neo.ground,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusNeoLg),
+        ),
+        titleTextStyle: TextStyle(
+          fontSize: 20, fontWeight: FontWeight.w800, color: neo.ink,
+        ),
+        contentTextStyle: TextStyle(
+          fontSize: 13.5, height: 1.5, fontWeight: FontWeight.w500,
+          color: neo.inkMuted,
         ),
       ),
 
       // ── SnackBar ──────────────────────────────────────────────────────────
+      // Reads as the design's floating toast: ground-coloured, not a dark slab.
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: isDark ? AppColors.neutral700 : AppColors.neutral800,
-        contentTextStyle: const TextStyle(
-          color: Color(0xFFFFFFFF),
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
+        backgroundColor: neo.ground,
+        contentTextStyle: TextStyle(
+          color: neo.ink,
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
         ),
+        actionTextColor: primary,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusNeo),
         ),
         behavior: SnackBarBehavior.floating,
-        elevation: 4,
+        elevation: 6,
       ),
 
       // ── Progress indicator ────────────────────────────────────────────────
       progressIndicatorTheme: ProgressIndicatorThemeData(
         color: primary,
-        linearTrackColor: isDark ? AppColors.neutral700 : AppColors.neutral100,
+        linearTrackColor: neo.track,
+        circularTrackColor: neo.track,
       ),
 
       // ── List tile ─────────────────────────────────────────────────────────
       listTileTheme: ListTileThemeData(
         minLeadingWidth: 0,
         horizontalTitleGap: AppSpacing.sm,
+        iconColor: neo.inkMuted,
+        textColor: neo.ink,
+        subtitleTextStyle: TextStyle(
+          fontSize: 12.5, fontWeight: FontWeight.w500, color: neo.inkMuted,
+        ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md, vertical: AppSpacing.xs,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusNeoSm),
         ),
+      ),
+
+      // ── Icon / switch ─────────────────────────────────────────────────────
+      iconTheme: IconThemeData(color: neo.inkMuted, size: 22),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected) ? neo.onAccent : neo.ground,
+        ),
+        trackColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected) ? neo.accentEnd : neo.track,
+        ),
+        trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
       ),
 
       // ── Text theme ────────────────────────────────────────────────────────
@@ -499,8 +555,8 @@ class AppTheme {
           fontSize: 15, height: 1.5, color: onSurface,
         ),
         bodySmall: TextStyle(
-          fontSize: 13, height: 1.5,
-          color: onSurface.withValues(alpha: 0.6),
+          fontSize: 13, height: 1.45, fontWeight: FontWeight.w500,
+          color: neo.inkMuted,
         ),
         labelLarge: TextStyle(
           fontSize: 15, fontWeight: FontWeight.w500,
@@ -511,9 +567,9 @@ class AppTheme {
           letterSpacing: 0.1, color: onSurface,
         ),
         labelSmall: TextStyle(
-          fontSize: 11, fontWeight: FontWeight.w500,
-          letterSpacing: 0.5,
-          color: onSurface.withValues(alpha: 0.7),
+          fontSize: 10.5, fontWeight: FontWeight.w600,
+          letterSpacing: 1.2,
+          color: neo.inkFaint,
         ),
       ),
     );

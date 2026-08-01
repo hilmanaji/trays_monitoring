@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/utils/date_time_formatter.dart';
 import '../../providers/app_providers.dart';
+import '../../theme/app_spacing.dart';
 import '../../widgets/module_page.dart';
+import '../../widgets/neo_box.dart';
 import '../../widgets/section_panel.dart';
 
 class MovementHistoryScreen extends ConsumerStatefulWidget {
@@ -143,8 +145,10 @@ class _MovementHistoryScreenState extends ConsumerState<MovementHistoryScreen> {
                       ),
                     ),
                   ...pageData.items.map(
-                    (movement) => Card(
+                    (movement) => NeoBox.inset(
                       margin: const EdgeInsets.only(bottom: 12),
+                      radius: AppSpacing.radiusNeoSm,
+                      elevation: 0.7,
                       child: ListTile(
                         title: Text(movement.movementNumber),
                         subtitle: Text(

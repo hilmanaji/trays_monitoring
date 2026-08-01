@@ -3,14 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/date_time_formatter.dart';
+import '../../../domain/entities/dashboard_snapshot.dart';
+import '../../../domain/entities/stock_by_tray_type.dart';
+import '../../../domain/entities/tray_movement.dart';
 import '../../../domain/entities/tray_type.dart';
 import '../../providers/app_providers.dart';
-import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_theme.dart';
+import '../../theme/neo_theme.dart';
 import '../../utils/project_stock_summary.dart';
 import '../../widgets/empty_state_widget.dart';
 import '../../widgets/kpi_card.dart';
+import '../../widgets/neo_box.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -32,6 +36,8 @@ class DashboardScreen extends ConsumerWidget {
 
     return RefreshIndicator(
       onRefresh: () => _refresh(ref),
+      backgroundColor: context.neo.ground,
+      color: context.neo.accentEnd,
       child: dashboard.when(
         data: (snapshot) {
           final pendingCount = pendingAsync.maybeWhen(
@@ -60,62 +66,39 @@ class _DashboardContent extends StatelessWidget {
     required this.trayTypesAsync,
   });
 
-  final dynamic snapshot;
+  final DashboardSnapshot snapshot;
   final int pendingCount;
   final AsyncValue<List<TrayType>> trayTypesAsync;
 
+  static const _hPad = EdgeInsets.symmetric(horizontal: AppSpacing.md);
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs    = theme.extension<AppColorScheme>()!;
-    final w     = MediaQuery.sizeOf(context).width;
+    final w      = MediaQuery.sizeOf(context).width;
     final twoCol = w >= 600;
 
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
-        // ── Hero header ──────────────────────────────────────────────────────
-        SliverToBoxAdapter(
-          child: Container(
-            margin: const EdgeInsets.fromLTRB(
-              AppSpacing.md, AppSpacing.md, AppSpacing.md, 0,
-            ),
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [cs.headerGradientStart, cs.headerGradientEnd],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-            ),
+        // ── Live stock kicker ────────────────────────────────────────────────
+        SliverPadding(
+          padding: _hPad.add(const EdgeInsets.only(top: 10, bottom: 12)),
+          sliver: SliverToBoxAdapter(
             child: Row(
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Warehouse Pulse',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Real-time tray tracking & inventory status',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.75),
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
+                const NeoKicker('Stok tray · live'),
+                const Spacer(),
+                if (pendingCount > 0)
+                  _PendingSyncBadge(count: pendingCount)
+                else
+                  Text(
+                    'sync ${DateTimeFormatter.formatTime(DateTime.now())}',
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w600,
+                      color: context.neo.inkGhost,
+                    ),
                   ),
-                ),
-                if (pendingCount > 0) ...[
-                  const SizedBox(width: 12),
-                  _PendingSyncBadge(count: pendingCount),
-                ],
               ],
             ),
           ),
@@ -123,76 +106,98 @@ class _DashboardContent extends StatelessWidget {
 
         // ── KPI grid ─────────────────────────────────────────────────────────
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md, AppSpacing.md, AppSpacing.md, 0,
-          ),
+          padding: _hPad,
           sliver: SliverGrid(
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: twoCol ? 4 : 2,
-              crossAxisSpacing: AppSpacing.itemGap,
-              mainAxisSpacing: AppSpacing.itemGap,
-              childAspectRatio: twoCol ? 1.0 : 1.15,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              childAspectRatio: twoCol ? 1.05 : 1.28,
             ),
             delegate: SliverChildListDelegate([
               KpiCard(
-                label: 'Total Trays',
+                label: 'Total Tray',
                 value: '${snapshot.totalTrays}',
+                note: 'terdaftar aktif',
                 icon: Icons.inbox_rounded,
-                color: AppColors.primary500,
+                color: context.neo.accentEnd,
               ),
               KpiCard(
-                label: 'Locations',
+                label: 'Lokasi',
                 value: '${snapshot.totalLocations}',
+                note: 'zona & rak aktif',
                 icon: Icons.place_rounded,
-                color: AppColors.blue500,
+                color: context.neo.accentEnd,
               ),
               KpiCard(
                 label: 'Stock Items',
                 value: '${snapshot.totalStock}',
+                note: 'tray di gudang',
                 icon: Icons.inventory_rounded,
-                color: AppColors.green600,
+                color: context.neo.accentEnd,
               ),
               KpiCard(
                 label: 'Recent Moves',
                 value: '${snapshot.recentMovementsCount}',
+                note: 'transaksi terakhir',
                 icon: Icons.local_shipping_rounded,
-                color: AppColors.amber500,
+                color: context.neo.accentEnd,
               ),
             ]),
           ),
         ),
 
-        // ── Quick actions ────────────────────────────────────────────────────
+        // ── Transactions ─────────────────────────────────────────────────────
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md, AppSpacing.md, AppSpacing.md, 0,
-          ),
-          sliver: SliverToBoxAdapter(
-            child: _SectionHeader(title: 'Quick Actions'),
+          padding: _hPad.add(const EdgeInsets.only(top: 24, bottom: 12)),
+          sliver: const SliverToBoxAdapter(
+            child: NeoKicker('Transaksi / transactions'),
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0,
-          ),
-          sliver: SliverToBoxAdapter(
-            child: _QuickActionStrip(),
+          padding: _hPad,
+          sliver: SliverGrid(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: twoCol ? 4 : 2,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              childAspectRatio: twoCol ? 1.15 : 1.5,
+            ),
+            delegate: SliverChildListDelegate(const [
+              _TransactionTile(
+                num: '01', label: 'Registrasi', en: 'NEW TRAY',
+                icon: Icons.qr_code_scanner_rounded, route: '/register',
+              ),
+              _TransactionTile(
+                num: '02', label: 'Movement', en: 'TRANSFER',
+                icon: Icons.sensors_rounded, route: '/movement',
+              ),
+              _TransactionTile(
+                num: '03', label: 'Scrap', en: 'DISPOSAL',
+                icon: Icons.delete_sweep_rounded, route: '/scrap',
+                muted: true,
+              ),
+              _TransactionTile(
+                num: '04', label: 'Find', en: 'LOCATE',
+                icon: Icons.location_searching_rounded, route: '/find',
+              ),
+            ]),
           ),
         ),
 
         // ── Latest movements ─────────────────────────────────────────────────
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md, AppSpacing.md, AppSpacing.md, 0,
-          ),
+          padding: _hPad.add(const EdgeInsets.only(top: 24, bottom: 10)),
           sliver: SliverToBoxAdapter(
-            child: _SectionHeader(title: 'Latest Movements'),
+            child: NeoKicker(
+              'Aktivitas terakhir',
+              trailing: 'Lihat semua',
+              onTrailingTap: () => context.go('/history'),
+            ),
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md, AppSpacing.sm, AppSpacing.md, 0,
-          ),
+          padding: _hPad,
           sliver: SliverToBoxAdapter(
             child: _LatestMovements(movements: snapshot.latestMovements),
           ),
@@ -200,17 +205,13 @@ class _DashboardContent extends StatelessWidget {
 
         // ── Stock by project ─────────────────────────────────────────────────
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md, AppSpacing.md, AppSpacing.md, 0,
-          ),
-          sliver: SliverToBoxAdapter(
-            child: _SectionHeader(title: 'Stock by Project'),
+          padding: _hPad.add(const EdgeInsets.only(top: 24, bottom: 10)),
+          sliver: const SliverToBoxAdapter(
+            child: NeoKicker('Stok per project'),
           ),
         ),
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.xl,
-          ),
+          padding: _hPad.add(const EdgeInsets.only(bottom: AppSpacing.xl)),
           sliver: SliverToBoxAdapter(
             child: _ProjectStockPanel(
               stockItems: snapshot.stockByTrayType,
@@ -225,158 +226,121 @@ class _DashboardContent extends StatelessWidget {
 
 // ─── Sub-widgets ──────────────────────────────────────────────────────────────
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title});
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-        letterSpacing: 0.3,
-      ),
-    );
-  }
-}
-
 class _PendingSyncBadge extends StatelessWidget {
   const _PendingSyncBadge({required this.count});
   final int count;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    final neo = context.neo;
+    return NeoBox(
+      radius: 12,
+      elevation: 0.55,
       onTap: () => context.go('/movement'),
-      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.sync_problem_rounded, size: 13, color: neo.accentEnd),
+          const SizedBox(width: 5),
+          Text(
+            '$count pending',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: neo.accentEnd,
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.sync_problem_rounded,
-                color: Colors.white, size: 22),
-            const SizedBox(height: 2),
-            Text(
-              '$count',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                height: 1.0,
-              ),
-            ),
-            Text(
-              'pending',
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.white.withValues(alpha: 0.75),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
 }
 
-class _QuickActionStrip extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs    = theme.extension<AppColorScheme>()!;
-
-    const actions = [
-      (Icons.sensors_rounded,       'Scan',     '/movement', AppColors.primary500),
-      (Icons.qr_code_scanner_rounded,'Register', '/register', AppColors.blue500),
-      (Icons.location_searching_rounded, 'Find', '/find',     AppColors.green500),
-      (Icons.delete_sweep_rounded,   'Scrap',    '/scrap',    AppColors.red500),
-    ];
-
-    return Row(
-      children: [
-        for (final (icon, label, route, color) in actions) ...[
-          Expanded(
-            child: _QuickActionTile(
-              icon: icon,
-              label: label,
-              route: route,
-              color: color,
-              cardColor: cs.surfaceCard,
-              outlineColor: theme.colorScheme.outline,
-            ),
-          ),
-          if (route != actions.last.$3) const SizedBox(width: AppSpacing.sm),
-        ],
-      ],
-    );
-  }
-}
-
-class _QuickActionTile extends StatelessWidget {
-  const _QuickActionTile({
-    required this.icon,
+/// Numbered action tile — the 01–04 transaction grid from the design.
+class _TransactionTile extends StatelessWidget {
+  const _TransactionTile({
+    required this.num,
     required this.label,
+    required this.en,
+    required this.icon,
     required this.route,
-    required this.color,
-    required this.cardColor,
-    required this.outlineColor,
+    this.muted = false,
   });
 
-  final IconData icon;
+  final String num;
   final String label;
+  final String en;
+  final IconData icon;
   final String route;
-  final Color color;
-  final Color cardColor;
-  final Color outlineColor;
+
+  /// Scrap uses the neutral ramp so destructive flows don't read as primary.
+  final bool muted;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: cardColor,
-      borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-      child: InkWell(
-        onTap: () => context.go(route),
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-            border: Border.all(color: outlineColor),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+    final neo = context.neo;
+
+    return NeoBox(
+      radius: AppSpacing.radiusNeo + 2,
+      onTap: () => context.go(route),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 34,
+                height: 34,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  gradient: muted ? neo.mutedGradient : neo.accentGradient,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, size: 24, color: color),
+                child: Text(
+                  num,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: neo.onAccent,
+                  ),
+                ),
               ),
-              const SizedBox(height: 8),
+              const Spacer(),
+              Icon(icon, size: 17, color: neo.inkFaint),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
               Text(
                 label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 16.5,
+                  fontWeight: FontWeight.w700,
+                  height: 1.15,
+                  color: neo.ink,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                en,
+                style: TextStyle(
+                  fontSize: 9.5,
                   fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface,
+                  letterSpacing: 0.9,
+                  color: neo.inkFaint,
                 ),
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
@@ -384,132 +348,99 @@ class _QuickActionTile extends StatelessWidget {
 
 class _LatestMovements extends StatelessWidget {
   const _LatestMovements({required this.movements});
-  final List<dynamic> movements;
+  final List<TrayMovement> movements;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs    = theme.extension<AppColorScheme>()!;
+    final neo = context.neo;
 
     if (movements.isEmpty) {
-      return Container(
+      return NeoBox.inset(
+        radius: AppSpacing.radiusNeo,
         padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: BoxDecoration(
-          color: cs.surfaceCard,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          border: Border.all(color: theme.colorScheme.outline),
-        ),
         child: Row(
           children: [
-            Icon(
-              Icons.inbox_outlined,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-            ),
+            Icon(Icons.inbox_outlined, size: 20, color: neo.inkFaint),
             const SizedBox(width: 12),
             Text(
-              'No movements recorded yet',
-              style: theme.textTheme.bodySmall,
+              'Belum ada pergerakan tercatat',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: neo.inkMuted,
+              ),
             ),
           ],
         ),
       );
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cs.surfaceCard,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        border: Border.all(color: theme.colorScheme.outline),
-      ),
-      child: Column(
-        children: [
-          for (var i = 0; i < movements.take(5).length; i++) ...[
-            if (i > 0)
-              Divider(
-                height: 1,
-                indent: AppSpacing.md,
-                endIndent: AppSpacing.md,
-                color: theme.colorScheme.outline,
-              ),
-            _MovementRow(movement: movements[i]),
-          ],
+    return Column(
+      children: [
+        for (var i = 0; i < movements.take(5).length; i++) ...[
+          if (i > 0) const SizedBox(height: 10),
+          _MovementRow(movement: movements[i]),
         ],
-      ),
+      ],
     );
   }
 }
 
 class _MovementRow extends StatelessWidget {
   const _MovementRow({required this.movement});
-  final dynamic movement;
+  final TrayMovement movement;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm + 2,
-      ),
+    final neo = context.neo;
+
+    return NeoBox(
+      radius: AppSpacing.radiusNeo,
+      elevation: 0.85,
+      onTap: () => context.go('/history'),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-            ),
-            child: Icon(
-              Icons.compare_arrows_rounded,
-              size: 18,
-              color: theme.colorScheme.primary,
-            ),
-          ),
+          const NeoIconBadge(text: 'MOVE', size: 38),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  movement.movementNumber as String? ?? '',
-                  style: theme.textTheme.labelLarge,
+                  movement.movementNumber,
                   overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: neo.ink,
+                  ),
                 ),
+                const SizedBox(height: 2),
                 Text(
-                  '${movement.fromLocationName} → ${movement.toLocationName}',
-                  style: theme.textTheme.bodySmall,
+                  '${movement.fromLocationName} → ${movement.toLocationName} · '
+                  '${movement.totalRfid} tag',
                   overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w500,
+                    height: 1.35,
+                    color: neo.inkMuted,
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  '${movement.totalRfid} tags',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                DateTimeFormatter.formatDateTime(movement.createdAt as DateTime),
-                style: theme.textTheme.labelSmall,
-              ),
-            ],
+          Text(
+            // createdAt is nullable on TrayMovement; formatTime renders '-'.
+            DateTimeFormatter.formatTime(movement.createdAt),
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: neo.inkGhost,
+            ),
           ),
         ],
       ),
@@ -523,53 +454,49 @@ class _ProjectStockPanel extends StatelessWidget {
     required this.trayTypesAsync,
   });
 
-  final List<dynamic> stockItems;
+  final List<StockByTrayType> stockItems;
   final AsyncValue<List<TrayType>> trayTypesAsync;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs    = theme.extension<AppColorScheme>()!;
+    final neo = context.neo;
 
     return trayTypesAsync.when(
       data: (types) {
-        final summary = ProjectStockSummaryBuilder.build(
-          stockItems.cast(),
-          types,
-        );
+        final summary = ProjectStockSummaryBuilder.build(stockItems.cast(), types);
         if (summary.isEmpty) {
-          return Container(
+          return NeoBox.inset(
+            radius: AppSpacing.radiusNeo,
             padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              color: cs.surfaceCard,
-              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-              border: Border.all(color: theme.colorScheme.outline),
-            ),
             child: Text(
-              'No stock data available',
-              style: theme.textTheme.bodySmall,
+              'Belum ada data stok',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: neo.inkMuted,
+              ),
             ),
           );
         }
 
-        return Container(
-          decoration: BoxDecoration(
-            color: cs.surfaceCard,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-            border: Border.all(color: theme.colorScheme.outline),
-          ),
+        final max = summary
+            .map((e) => e.total)
+            .fold<int>(1, (a, b) => b > a ? b : a);
+
+        return NeoBox(
+          radius: AppSpacing.radiusNeo + 2,
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
           child: Column(
             children: [
-              for (var i = 0; i < summary.length; i++) ...[
-                if (i > 0)
-                  Divider(
-                    height: 1,
-                    indent: AppSpacing.md,
-                    endIndent: AppSpacing.md,
-                    color: theme.colorScheme.outline,
+              for (final row in summary)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: _StockRow(
+                    project: row.project,
+                    total: row.total,
+                    ratio: row.total / max,
                   ),
-                _StockRow(project: summary[i].project, total: summary[i].total),
-              ],
+                ),
             ],
           ),
         );
@@ -580,37 +507,55 @@ class _ProjectStockPanel extends StatelessWidget {
           child: CircularProgressIndicator(),
         ),
       ),
-      error: (e, _) => Text(e.toString()),
+      error: (e, _) => ErrorStateWidget(message: e.toString()),
     );
   }
 }
 
 class _StockRow extends StatelessWidget {
-  const _StockRow({required this.project, required this.total});
+  const _StockRow({
+    required this.project,
+    required this.total,
+    required this.ratio,
+  });
+
   final String project;
   final int total;
+  final double ratio;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm + 2,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(project, style: theme.textTheme.bodyMedium),
-          ),
-          Text(
-            '$total',
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: theme.colorScheme.primary,
+    final neo = context.neo;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                project,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: neo.ink,
+                ),
+              ),
             ),
-          ),
-        ],
-      ),
+            Text(
+              '$total',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: neo.accentEnd,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 7),
+        NeoProgressBar(value: ratio, height: 10),
+      ],
     );
   }
 }
@@ -638,15 +583,24 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return EmptyStateWidget(
-      icon: Icons.cloud_off_rounded,
-      title: 'Dashboard unavailable',
-      subtitle: message,
-      action: OutlinedButton.icon(
-        onPressed: onRetry,
-        icon: const Icon(Icons.refresh_rounded),
-        label: const Text('Retry'),
-      ),
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        EmptyStateWidget(
+          icon: Icons.cloud_off_rounded,
+          iconColor: Theme.of(context).extension<AppColorScheme>()!.statusError,
+          title: 'Dashboard tidak tersedia',
+          subtitle: message,
+          action: SizedBox(
+            width: 190,
+            child: NeoSecondaryButton(
+              label: 'Coba lagi',
+              icon: Icons.refresh_rounded,
+              onPressed: onRetry,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

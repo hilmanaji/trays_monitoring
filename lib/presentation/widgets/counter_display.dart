@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../theme/neo_theme.dart';
 
 enum CounterSize { xl, large, medium }
 
@@ -30,8 +31,8 @@ class CounterDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final effectiveColor = color ?? theme.colorScheme.primary;
+    final neo = context.neo;
+    final effectiveColor = color ?? neo.ink;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -40,13 +41,13 @@ class CounterDisplay extends StatelessWidget {
           Text(
             label!.toUpperCase(),
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 9.5,
               fontWeight: FontWeight.w700,
-              letterSpacing: 1.8,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              letterSpacing: 1.4,
+              color: neo.inkFaint,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
         ],
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 180),
@@ -77,10 +78,10 @@ class CounterDisplay extends StatelessWidget {
           Text(
             sublabel!,
             style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.3,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.2,
+              color: neo.inkMuted,
             ),
           ),
         ],

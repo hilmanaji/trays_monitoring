@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_theme.dart';
+import '../theme/neo_theme.dart';
+import 'neo_box.dart';
 import 'status_chip.dart';
 
 /// Large-touch tray list tile — designed for glove-mode operation.
+///
+/// Extruded card that presses into the ground on tap; the EPC keeps its
+/// monospace treatment so long hex strings stay scannable.
 class TrayCard extends StatelessWidget {
   const TrayCard({
     super.key,
@@ -28,125 +33,80 @@ class TrayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.extension<AppColorScheme>()!;
+    final neo = context.neo;
 
-    return Material(
-      color: cs.surfaceCard,
-      borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-            border: Border.all(color: theme.colorScheme.outline),
-          ),
-          child: Row(
+    return NeoBox(
+      radius: AppSpacing.radiusNeo,
+      onTap: onTap,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
             children: [
-              // Leading icon
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                ),
-                child: Icon(
-                  Icons.inbox_rounded,
-                  size: 24,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              // Content
+              const NeoIconBadge(icon: Icons.inbox_rounded, size: 38),
+              const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            trayCode,
-                            style: theme.textTheme.titleSmall,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        StatusChip(status: status, compact: true),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      epc,
-                      style: TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 11,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                        letterSpacing: 0.3,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 5),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.place_rounded,
-                          size: 13,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            locationName,
-                            style: theme.textTheme.bodySmall,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (trayType != null) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceContainerHigh,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              trayType!,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.55),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              if (trailing != null) ...[
-                const SizedBox(width: 8),
-                trailing!,
-              ] else if (onTap != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: Icon(
-                    Icons.chevron_right_rounded,
-                    size: 20,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                child: Text(
+                  trayCode,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: neo.ink,
                   ),
                 ),
+              ),
+              const SizedBox(width: 8),
+              if (trailing != null) trailing! else StatusChip(status: status, compact: true),
             ],
           ),
-        ),
+          const SizedBox(height: 8),
+          Text(
+            epc,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 10.5,
+              height: 1.4,
+              color: neo.inkMuted,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _MetaRow(
+            items: [locationName, ?trayType, ?lastMovement],
+          ),
+        ],
       ),
+    );
+  }
+}
+
+/// Dot-separated metadata line — the recurring "type · part · customer" row.
+class _MetaRow extends StatelessWidget {
+  const _MetaRow({required this.items});
+  final List<String> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final neo = context.neo;
+    final style = TextStyle(
+      fontSize: 10,
+      fontWeight: FontWeight.w600,
+      color: neo.inkMuted,
+    );
+
+    return Wrap(
+      spacing: 7,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        for (var i = 0; i < items.length; i++) ...[
+          if (i > 0) Text('·', style: style),
+          Text(items[i], style: style),
+        ],
+      ],
     );
   }
 }
@@ -168,72 +128,62 @@ class EpcTagTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.extension<AppColorScheme>()!;
+    final neo = context.neo;
+    final cs  = Theme.of(context).extension<AppColorScheme>()!;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.only(bottom: AppSpacing.tileGap),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm + 2,
-      ),
-      decoration: BoxDecoration(
-        color: isNew
-            ? cs.statusOkContainer
-            : theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(
-          color: isNew ? cs.statusOk.withValues(alpha: 0.4) : theme.colorScheme.outline,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(6),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.itemGap),
+      child: NeoBox(
+        radius: AppSpacing.radiusNeoSm + 3,
+        elevation: 0.85,
+        padding: const EdgeInsets.fromLTRB(12, 11, 8, 11),
+        child: Row(
+          children: [
+            NeoIconBadge(
+              text: '${index + 1}',
+              size: 30,
+              radius: 10,
+              accent: isNew,
             ),
-            child: Text(
-              '${index + 1}',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              epc,
-              style: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                letterSpacing: 0.5,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (onRemove != null)
-            SizedBox(
-              width: 36,
-              height: 36,
-              child: IconButton(
-                onPressed: onRemove,
-                padding: EdgeInsets.zero,
-                icon: Icon(
-                  Icons.close_rounded,
-                  size: 18,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                epc,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.4,
+                  color: neo.ink,
                 ),
               ),
             ),
-        ],
+            if (isNew)
+              Padding(
+                padding: const EdgeInsets.only(left: 6),
+                child: Text(
+                  'NEW',
+                  style: TextStyle(
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.1,
+                    color: cs.statusOk,
+                  ),
+                ),
+              ),
+            if (onRemove != null)
+              SizedBox(
+                width: 36,
+                height: 36,
+                child: IconButton(
+                  onPressed: onRemove,
+                  padding: EdgeInsets.zero,
+                  icon: Icon(Icons.close_rounded, size: 18, color: neo.inkGhost),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

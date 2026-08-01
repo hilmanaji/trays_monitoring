@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/neo_theme.dart';
+
 class ModulePage extends StatelessWidget {
   const ModulePage({
     super.key,
@@ -16,7 +18,7 @@ class ModulePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final neo   = context.neo;
     final width = MediaQuery.sizeOf(context).width;
     final horizontalPadding = width < 640 ? 16.0 : 24.0;
 
@@ -39,9 +41,27 @@ class ModulePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: theme.textTheme.headlineMedium),
-                  const SizedBox(height: 6),
-                  Text(subtitle, style: theme.textTheme.bodyLarge),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.5,
+                      color: neo.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  // Kicker treatment: the subtitle is the screen's "code line".
+                  Text(
+                    subtitle.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.4,
+                      height: 1.4,
+                      color: neo.inkFaint,
+                    ),
+                  ),
                 ],
               ),
             ),

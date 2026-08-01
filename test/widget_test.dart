@@ -26,6 +26,6 @@ void main() {
     expect(find.text('Tray Monitoring'), findsOneWidget);
     expect(find.text('NIK'), findsOneWidget);
     expect(find.text('Password'), findsOneWidget);
-    expect(find.text('Sign In'), findsOneWidget);
+    expect(find.text('Masuk / Sign in'), findsOneWidget);
   });
 }

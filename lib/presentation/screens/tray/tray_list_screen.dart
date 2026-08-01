@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/utils/date_time_formatter.dart';
 import '../../providers/app_providers.dart';
+import '../../theme/app_spacing.dart';
 import '../../widgets/module_page.dart';
+import '../../widgets/neo_box.dart';
 import '../../widgets/section_panel.dart';
 
 class TrayListScreen extends ConsumerStatefulWidget {
@@ -70,8 +72,12 @@ class _TrayListScreenState extends ConsumerState<TrayListScreen> {
                       ]
                     : items
                           .map(
-                            (tray) => Card(
+                            // Rows are wells inside the panel: raised-on-raised
+                            // reads as noise in soft UI.
+                            (tray) => NeoBox.inset(
                               margin: const EdgeInsets.only(bottom: 12),
+                              radius: AppSpacing.radiusNeoSm,
+                              elevation: 0.7,
                               child: ListTile(
                                 title: Text(tray.epc),
                                 subtitle: Text(

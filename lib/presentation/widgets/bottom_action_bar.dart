@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_spacing.dart';
+import '../theme/neo_theme.dart';
 
 /// Thumb-zone action bar fixed at the bottom of RFID operation screens.
 ///
@@ -25,17 +26,13 @@ class BottomActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final bottom = MediaQuery.paddingOf(context).bottom;
 
+    // No divider or elevation: the bar is the same ground as the content, and
+    // the buttons' own extrusion is what separates them from it.
     return Container(
-      color: color ?? theme.colorScheme.surface,
-      padding: EdgeInsets.fromLTRB(
-        16,
-        12,
-        16,
-        12 + bottom,
-      ),
+      color: color ?? context.neo.ground,
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + bottom),
       child: _layout(),
     );
   }
@@ -54,7 +51,7 @@ class BottomActionBar extends StatelessWidget {
             flex: 2,
             child: SizedBox(height: h, child: secondary!),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             flex: 3,
             child: SizedBox(height: h, child: primary),
@@ -66,9 +63,9 @@ class BottomActionBar extends StatelessWidget {
     return Row(
       children: [
         Expanded(child: SizedBox(height: h, child: tertiary!)),
-        const SizedBox(width: 8),
+        const SizedBox(width: 10),
         Expanded(child: SizedBox(height: h, child: secondary!)),
-        const SizedBox(width: 8),
+        const SizedBox(width: 10),
         Expanded(flex: 2, child: SizedBox(height: h, child: primary)),
       ],
     );

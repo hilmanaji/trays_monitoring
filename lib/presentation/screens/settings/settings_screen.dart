@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_spacing.dart';
 import '../../theme/app_theme.dart';
+import '../../theme/neo_theme.dart';
+import '../../widgets/neo_box.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Settings state & provider
@@ -193,7 +195,6 @@ class _Section extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs    = theme.extension<AppColorScheme>()!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,12 +217,8 @@ class _Section extends StatelessWidget {
             ],
           ),
         ),
-        Container(
-          decoration: BoxDecoration(
-            color: cs.surfaceCard,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-            border: Border.all(color: theme.colorScheme.outline),
-          ),
+        NeoBox(
+          radius: AppSpacing.radiusNeo + 2,
           child: Column(
             children: [
               for (var i = 0; i < children.length; i++) ...[
@@ -230,7 +227,7 @@ class _Section extends StatelessWidget {
                     height: 1,
                     indent: AppSpacing.md,
                     endIndent: AppSpacing.md,
-                    color: theme.colorScheme.outline,
+                    color: context.neo.track,
                   ),
                 children[i],
               ],
@@ -356,44 +353,30 @@ class _PowerSelector extends StatelessWidget {
             children: List.generate(3, (i) {
               final selected = value == i;
               return Expanded(
-                child: GestureDetector(
-                  onTap: () => onChanged(i),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    margin: EdgeInsets.only(right: i < 2 ? 8 : 0),
+                child: Padding(
+                  padding: EdgeInsets.only(right: i < 2 ? 8 : 0),
+                  // Selected level is pressed *into* the ground — the soft-UI
+                  // equivalent of a latched segmented control.
+                  child: NeoBox(
+                    depth: selected ? NeoDepth.inset : NeoDepth.raised,
+                    elevation: 0.7,
+                    radius: AppSpacing.radiusNeoSm,
+                    onTap: () => onChanged(i),
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? _colors[i].withValues(alpha: 0.12)
-                          : theme.colorScheme.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                      border: Border.all(
-                        color: selected
-                            ? _colors[i]
-                            : theme.colorScheme.outline,
-                        width: selected ? 1.5 : 1,
-                      ),
-                    ),
                     child: Column(
                       children: [
                         Icon(
                           _icons[i],
                           size: 24,
-                          color: selected
-                              ? _colors[i]
-                              : theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.4),
+                          color: selected ? _colors[i] : context.neo.inkFaint,
                         ),
                         const SizedBox(height: 4),
                         Text(
                           _labels[i],
                           style: TextStyle(
                             fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: selected
-                                ? _colors[i]
-                                : theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.55),
+                            fontWeight: FontWeight.w700,
+                            color: selected ? _colors[i] : context.neo.inkMuted,
                           ),
                         ),
                       ],

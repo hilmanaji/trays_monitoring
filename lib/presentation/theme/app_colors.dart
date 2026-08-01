@@ -54,4 +54,40 @@ abstract final class AppColors {
   static const blue500  = Color(0xFF3B82F6);
   static const blue900  = Color(0xFF0D1E3A);
   static const blueLight = Color(0xFFEFF6FF);
+
+  // ── Neomorphism ("soft UI") ──────────────────────────────────────────────
+  // A single ground colour carries the whole surface; depth comes from a pair
+  // of shadows (dark bottom-right, white top-left) instead of borders.
+
+  /// Light ground — every card, field, tab and button sits on this exact colour.
+  static const neoGround      = Color(0xFFE9EDF3);
+  static const neoShadowDark  = Color(0xFFCCD2DC);
+  static const neoShadowLight = Color(0xFFFFFFFF);
+
+  /// Dark ground — same recipe, inverted luminance.
+  static const neoGroundDark      = Color(0xFF262B33);
+  static const neoShadowDarkDeep  = Color(0xFF1B1F26);
+  static const neoShadowLightDeep = Color(0xFF333A45);
+
+  /// Steel-blue accent — primary actions, tag counters, active states only.
+  static const neoAccentStart = Color(0xFF6A90B6);
+  static const neoAccentEnd   = Color(0xFF4D7396);
+  static const neoAccentDim   = Color(0xFF8CA9C6);
+
+  /// Neutral accent — destructive / secondary emphasis (Scrap).
+  static const neoMutedStart = Color(0xFF9AA4B2);
+  static const neoMutedEnd   = Color(0xFF7A8494);
+
+  // Text ramp — kept deliberately dark: neomorphic contrast is already low and
+  // the app is used in brightly-lit warehouses.
+  static const neoInk       = Color(0xFF2B3340);
+  static const neoInkMuted  = Color(0xFF7A8494);
+  static const neoInkFaint  = Color(0xFF9AA4B2);
+  static const neoInkGhost  = Color(0xFFA3ADBB);
+  static const neoTrack     = Color(0xFFE0E5EE);
+
+  static const neoInkDark       = Color(0xFFE7EBF2);
+  static const neoInkMutedDark  = Color(0xFF9BA6B6);
+  static const neoInkFaintDark  = Color(0xFF7E8896);
+  static const neoTrackDark     = Color(0xFF323945);
 }

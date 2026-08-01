@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/app_providers.dart';
 import '../../providers/registration_controller.dart';
+import '../../theme/app_spacing.dart';
 import '../../widgets/module_page.dart';
+import '../../widgets/neo_box.dart';
 import '../../widgets/section_panel.dart';
 
 class RfidRegistrationScreen extends ConsumerStatefulWidget {
@@ -174,8 +176,10 @@ class _RfidRegistrationScreenState
                   title: Text('No RFID tags scanned yet.'),
                 ),
               ...submissionState.epcs.map(
-                (epc) => Card(
+                (epc) => NeoBox.inset(
                   margin: const EdgeInsets.only(bottom: 8),
+                  radius: AppSpacing.radiusNeoSm,
+                  elevation: 0.7,
                   child: ListTile(
                     title: Text(
                       epc,

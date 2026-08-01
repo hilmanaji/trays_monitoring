@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../providers/auth_controller.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/neo_theme.dart';
 import '../../widgets/module_page.dart';
+import '../../widgets/neo_box.dart';
 import '../../widgets/section_panel.dart';
 
 class MenuScreen extends ConsumerWidget {
@@ -165,46 +168,43 @@ class _MenuAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final neo = context.neo;
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(24),
+    return NeoBox(
+      radius: AppSpacing.radiusNeoLg,
       onTap: () => context.go(route),
-      child: Ink(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: theme.colorScheme.outlineVariant),
-        ),
-        child: Row(
-          children: [
-            Container(
-              height: 52,
-              width: 52,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(18),
-              ),
-              child: Icon(icon, color: theme.colorScheme.primary),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          NeoIconBadge(icon: icon, size: 50, radius: 17),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16.5,
+                    fontWeight: FontWeight.w700,
+                    color: neo.ink,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
+                    height: 1.35,
+                    color: neo.inkMuted,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 4),
-                  Text(subtitle, style: theme.textTheme.bodyMedium),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ],
-        ),
+          ),
+          Icon(Icons.chevron_right_rounded, size: 20, color: neo.inkGhost),
+        ],
       ),
     );
   }

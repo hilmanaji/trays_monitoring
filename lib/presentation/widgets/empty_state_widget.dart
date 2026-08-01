@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_spacing.dart';
+import '../theme/app_theme.dart';
+import '../theme/neo_theme.dart';
+import 'neo_box.dart';
+
 /// Generic empty-state placeholder with icon, title, and optional action.
 class EmptyStateWidget extends StatelessWidget {
   const EmptyStateWidget({
@@ -19,40 +24,114 @@ class EmptyStateWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final neo = context.neo;
+
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 64,
-              color: iconColor ??
-                  theme.colorScheme.onSurface.withValues(alpha: 0.18),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+        padding: const EdgeInsets.all(24),
+        child: NeoBox.inset(
+          radius: AppSpacing.radiusNeoLg,
+          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              NeoBox(
+                width: 68,
+                height: 68,
+                radius: 34,
+                elevation: 0.8,
+                alignment: Alignment.center,
+                child: Icon(icon, size: 30, color: iconColor ?? neo.inkFaint),
               ),
-            ),
-            if (subtitle != null) ...[
+              const SizedBox(height: 18),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  height: 1.25,
+                  color: neo.ink,
+                ),
+              ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  subtitle!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
+                    height: 1.45,
+                    color: neo.inkMuted,
+                  ),
+                ),
+              ],
+              if (action != null) ...[
+                const SizedBox(height: 22),
+                action!,
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Idle scan state — the pulsing accent disc from the design's "TERBACA" panel.
+class ScanIdleState extends StatelessWidget {
+  const ScanIdleState({
+    super.key,
+    this.title = 'Tekan trigger untuk\nmembaca tag',
+    this.subtitle = 'Bulk read · UHF 865–868 MHz · 26 dBm',
+    this.scanning = false,
+  });
+
+  final String title;
+  final String subtitle;
+
+  /// While live, the copy switches to "waiting for tags".
+  final bool scanning;
+
+  @override
+  Widget build(BuildContext context) {
+    final neo = context.neo;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: NeoBox.inset(
+          radius: AppSpacing.radiusNeoLg,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const NeoPulse(),
+              const SizedBox(height: 16),
+              Text(
+                scanning ? 'Menunggu tag…\nWaiting for tags' : title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  height: 1.25,
+                  color: neo.ink,
+                ),
+              ),
               const SizedBox(height: 8),
               Text(
-                subtitle!,
+                subtitle,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  height: 1.4,
+                  color: neo.inkMuted,
+                ),
               ),
             ],
-            if (action != null) ...[
-              const SizedBox(height: 24),
-              action!,
-            ],
-          ],
+          ),
         ),
       ),
     );
@@ -72,42 +151,24 @@ class ErrorStateWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 56,
-              color: theme.colorScheme.error.withValues(alpha: 0.7),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Something went wrong',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.error,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall,
-            ),
-            if (onRetry != null) ...[
-              const SizedBox(height: 24),
-              OutlinedButton.icon(
+    final cs = Theme.of(context).extension<AppColorScheme>()!;
+
+    return EmptyStateWidget(
+      icon: Icons.error_outline_rounded,
+      iconColor: cs.statusError,
+      title: 'Something went wrong',
+      subtitle: message,
+      action: onRetry == null
+          ? null
+          : SizedBox(
+              width: 180,
+              child: NeoSecondaryButton(
+                label: 'Retry',
+                icon: Icons.refresh_rounded,
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Retry'),
+                height: AppSpacing.touchMin,
               ),
-            ],
-          ],
-        ),
-      ),
+            ),
     );
   }
 }

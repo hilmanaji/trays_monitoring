@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/auth_controller.dart';
+import '../../theme/app_spacing.dart';
+import '../../theme/neo_theme.dart';
+import '../../widgets/neo_box.dart';
 import '../../widgets/siix_logo.dart';
 
 typedef LoginCallback =
@@ -58,25 +61,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final theme = Theme.of(context);
     final isCompact = MediaQuery.sizeOf(context).width < 420;
 
+    final neo = context.neo;
+
     return Scaffold(
+      // Soft UI has no hero gradient: the sign-in card is simply the first
+      // extruded object on the same ground the rest of the app uses.
+      backgroundColor: neo.ground,
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF081F3E), Color(0xFF1357CE), Color(0xFF85D1FF)],
-          ),
-        ),
+        color: neo.ground,
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 460),
-                child: Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(isCompact ? 20 : 28),
-                    child: Form(
+                child: NeoBox(
+                  radius: AppSpacing.radiusNeoLg,
+                  elevation: 1.3,
+                  padding: EdgeInsets.all(isCompact ? 20 : 28),
+                  child: Form(
                       key: _formKey,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -88,10 +91,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             'Tray Monitoring',
                             style: theme.textTheme.headlineMedium,
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Text(
-                            'Industrial RFID workflow for warehouse tray tracking.',
-                            style: theme.textTheme.bodyLarge,
+                            'RFID TRAY CONTROL · UROVO DT40',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.4,
+                              color: neo.inkFaint,
+                            ),
                           ),
                           const SizedBox(height: 24),
                           TextFormField(
@@ -138,24 +146,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                           ],
                           const SizedBox(height: 24),
-                          FilledButton.icon(
-                            onPressed: isLoading ? null : _submit,
-                            icon: isLoading
-                                ? const SizedBox(
-                                    height: 18,
-                                    width: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Icon(Icons.login_rounded),
-                            label: const Text('Sign In'),
-                          ),
+                          if (isLoading)
+                            const SizedBox(
+                              height: AppSpacing.touchMin,
+                              child: Center(
+                                child: SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child: CircularProgressIndicator(strokeWidth: 2.5),
+                                ),
+                              ),
+                            )
+                          else
+                            NeoButton(
+                              label: 'Masuk / Sign in',
+                              icon: Icons.login_rounded,
+                              onPressed: _submit,
+                            ),
                         ],
                       ),
                     ),
-                  ),
                 ),
               ),
             ),
