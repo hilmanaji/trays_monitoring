@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../domain/entities/tray_type.dart';
 import '../../providers/app_providers.dart';
+import '../../theme/neo_theme.dart';
 import '../../utils/project_stock_summary.dart';
 import '../../widgets/module_page.dart';
 import '../../widgets/section_panel.dart';
@@ -65,20 +66,10 @@ class _StockScreenState extends ConsumerState<StockScreen> {
                   .toList();
               return SectionPanel(
                 title: 'Stock by Location',
-                child: DataTable(
-                  columns: const [
-                    DataColumn(label: Text('Location')),
-                    DataColumn(label: Text('Total')),
-                  ],
+                child: _ScrollableTable(
+                  columns: const ['Location', 'Total'],
                   rows: filtered
-                      .map(
-                        (item) => DataRow(
-                          cells: [
-                            DataCell(Text(item.locationName)),
-                            DataCell(Text('${item.total}')),
-                          ],
-                        ),
-                      )
+                      .map((item) => [item.locationName, '${item.total}'])
                       .toList(),
                 ),
               );
@@ -158,21 +149,73 @@ class _ProjectStockTable extends StatelessWidget {
 
     return SectionPanel(
       title: 'Stock by Project',
-      child: DataTable(
-        columns: const [
-          DataColumn(label: Text('Project')),
-          DataColumn(label: Text('Total')),
-        ],
+      child: _ScrollableTable(
+        columns: const ['Project', 'Total'],
         rows: filtered
-            .map(
-              (item) => DataRow(
-                cells: [
-                  DataCell(Text(item.project)),
-                  DataCell(Text('${item.total}')),
-                ],
-              ),
-            )
+            .map((item) => [item.project, '${item.total}'])
             .toList(),
+      ),
+    );
+  }
+}
+
+/// A DataTable sizes itself to its content, so on a 375px handheld the default
+/// column spacing pushes it past the panel and Flutter reports a right-edge
+/// overflow. Tighter metrics make it fit in the common case, and the horizontal
+/// scroll view keeps long location names reachable instead of clipped.
+class _ScrollableTable extends StatelessWidget {
+  const _ScrollableTable({required this.columns, required this.rows});
+
+  final List<String> columns;
+  final List<List<String>> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final neo = context.neo;
+
+    if (rows.isEmpty) {
+      return Text(
+        'No data for the current filter.',
+        style: TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w600,
+          color: neo.inkMuted,
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minWidth: MediaQuery.sizeOf(context).width - 100,
+        ),
+        child: DataTable(
+          columnSpacing: 20,
+          horizontalMargin: 0,
+          headingRowHeight: 38,
+          dataRowMinHeight: 40,
+          dataRowMaxHeight: 48,
+          dividerThickness: 1,
+          headingTextStyle: TextStyle(
+            fontSize: 9.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.3,
+            color: neo.inkFaint,
+          ),
+          dataTextStyle: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: neo.ink,
+          ),
+          columns: [
+            for (final c in columns) DataColumn(label: Text(c.toUpperCase())),
+          ],
+          rows: [
+            for (final r in rows)
+              DataRow(cells: [for (final cell in r) DataCell(Text(cell))]),
+          ],
+        ),
       ),
     );
   }

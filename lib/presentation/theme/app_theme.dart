@@ -186,11 +186,10 @@ class AppColorScheme extends ThemeExtension<AppColorScheme> {
 class AppTheme {
   const AppTheme._();
 
-  /// The design specifies Manrope (400–800). It is not bundled, so the app
-  /// falls back to the platform sans by default. To adopt it: drop the TTFs in
-  /// `assets/fonts/`, declare the family in `pubspec.yaml`, and set this to
-  /// `'Manrope'` — nothing else in the theme needs to change.
-  static const String? fontFamily = null;
+  /// Manrope 400–800, bundled as static TTFs under `assets/fonts/` and declared
+  /// in `pubspec.yaml`. Kept local rather than fetched at runtime: these devices
+  /// work offline on the warehouse floor.
+  static const String fontFamily = 'Manrope';
 
   static ThemeData light() => _build(Brightness.light);
   static ThemeData dark()  => _build(Brightness.dark);

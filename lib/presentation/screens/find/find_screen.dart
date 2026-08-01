@@ -188,37 +188,54 @@ class _FindScreenState extends ConsumerState<FindScreen> {
           Divider(height: 1, color: theme.colorScheme.outline),
 
           // ── Geiger meter ─────────────────────────────────────────────────
+          // The dial shrinks to whatever vertical room is left (the nearby-tag
+          // list can claim 200px of it) and the block scrolls if even that is
+          // not enough, so short viewports never overflow.
           Expanded(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GeigerMeter(
-                    rssi: state.rssi,
-                    targetEpc: state.targetEpc,
-                    isActive: state.isScanning,
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  SignalStrengthMeter(
-                    rssi: state.rssi,
-                    height: 20,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  if (state.lastSeenAt != null)
-                    Text(
-                      'Last seen: ${_elapsed(state.lastSeenAt!)}',
-                      style: theme.textTheme.bodySmall,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                const chrome = 130.0; // bar + labels below the dial
+                final diameter =
+                    (constraints.maxHeight - chrome).clamp(150.0, 300.0);
+
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
                     ),
-                  if (state.isScanning && state.targetEpc == null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.md),
-                      child: Text(
-                        'All tags: ${state.detectedEpcs.length} detected',
-                        style: theme.textTheme.bodySmall,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.sm,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          GeigerMeter(
+                            rssi: state.rssi,
+                            targetEpc: state.targetEpc,
+                            isActive: state.isScanning,
+                            size: diameter,
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          SignalStrengthMeter(rssi: state.rssi, height: 20),
+                          const SizedBox(height: AppSpacing.sm),
+                          if (state.lastSeenAt != null)
+                            Text(
+                              'Last seen: ${_elapsed(state.lastSeenAt!)}',
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          if (state.isScanning && state.targetEpc == null)
+                            Text(
+                              'All tags: ${state.detectedEpcs.length} detected',
+                              style: theme.textTheme.bodySmall,
+                            ),
+                        ],
                       ),
                     ),
-                ],
-              ),
+                  ),
+                );
+              },
             ),
           ),
 

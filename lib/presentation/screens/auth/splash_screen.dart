@@ -1,63 +1,90 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/neo_theme.dart';
+import '../../widgets/neo_box.dart';
 import '../../widgets/siix_logo.dart';
 
+/// Boot screen. Deliberately built from the same pieces as the login screen —
+/// brand tile, title, kicker — so the handoff between them reads as one surface
+/// settling rather than two different apps.
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final neo = context.neo;
+
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF08244A), Color(0xFF165DDB), Color(0xFF6DC6FF)],
-          ),
-        ),
+      backgroundColor: neo.ground,
+      body: SafeArea(
         child: Center(
-          child: Container(
-            width: 280,
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 30),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(32),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x33081730),
-                  blurRadius: 28,
-                  offset: Offset(0, 20),
-                ),
-              ],
-            ),
-            child: const Column(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SiixLogo(width: 150),
-                SizedBox(height: 18),
+                NeoBox(
+                  radius: 24,
+                  elevation: 1.1,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 18,
+                  ),
+                  child: const SiixLogo(width: 110, showTagline: false),
+                ),
+                const SizedBox(height: 24),
                 Text(
                   'Tray Monitoring',
                   style: TextStyle(
-                    fontSize: 22,
+                    fontSize: 30,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF081120),
+                    letterSpacing: -0.6,
+                    height: 1.05,
+                    color: neo.ink,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 7),
                 Text(
-                  'Warehouse RFID workflow is preparing your session.',
+                  'RFID TRAY CONTROL · UROVO DT40',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    height: 1.4,
-                    color: Color(0xFF6B7A90),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.4,
+                    color: neo.inkFaint,
                   ),
                 ),
-                SizedBox(height: 22),
+
+                // Indeterminate fill running through the same groove the
+                // progress bars elsewhere in the app use.
+                const SizedBox(height: 34),
                 SizedBox(
-                  width: 30,
-                  height: 30,
-                  child: CircularProgressIndicator(strokeWidth: 3),
+                  width: 190,
+                  child: NeoBox.inset(
+                    height: 10,
+                    radius: 5,
+                    elevation: 0.55,
+                    padding: const EdgeInsets.all(3),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        minHeight: 4,
+                        backgroundColor: Colors.transparent,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          neo.accentEnd,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'Menyiapkan sesi…',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: neo.inkMuted,
+                  ),
                 ),
               ],
             ),

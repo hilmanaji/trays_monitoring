@@ -7,7 +7,6 @@ import '../theme/app_spacing.dart';
 import '../theme/neo_theme.dart';
 import 'neo_box.dart';
 import 'offline_banner.dart';
-import 'siix_logo.dart';
 
 /// App chrome: soft header, ground-coloured body, and an inset tab tray whose
 /// selected item is the only accent-gradient surface on screen.
@@ -74,8 +73,6 @@ class AppShell extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(14, 6, 14, 0),
           child: Row(
             children: [
-              const SiixLogo(width: 68, showTagline: false),
-              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

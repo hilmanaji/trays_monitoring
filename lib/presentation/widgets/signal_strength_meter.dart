@@ -104,12 +104,17 @@ class GeigerMeter extends StatefulWidget {
     required this.rssi,
     this.targetEpc,
     this.isActive = false,
+    this.size = 300,
   });
 
   /// Normalised 0.0 → 1.0.
   final double rssi;
   final String? targetEpc;
   final bool isActive;
+
+  /// Outer diameter. Every ring inside scales from this, so the meter can
+  /// shrink on short viewports instead of overflowing its column.
+  final double size;
 
   @override
   State<GeigerMeter> createState() => _GeigerMeterState();
@@ -158,21 +163,25 @@ class _GeigerMeterState extends State<GeigerMeter>
   Widget build(BuildContext context) {
     final neo = context.neo;
 
+    // Everything is expressed as a fraction of the outer diameter.
+    final d = widget.size;
+    final k = d / 300;
+
     return AnimatedBuilder(
       animation: _ctrl,
       builder: (context, _) {
         final t = _ctrl.value;
         return SizedBox(
-          width: 300,
-          height: 300,
+          width: d,
+          height: d,
           child: Stack(
             alignment: Alignment.center,
             children: [
               // Outer pulse ring — proximity is read from its cadence.
               if (widget.rssi > 0.05)
                 Container(
-                  width: 260 + t * 40,
-                  height: 260 + t * 40,
+                  width: d * 0.867 + t * 40 * k,
+                  height: d * 0.867 + t * 40 * k,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
@@ -182,12 +191,16 @@ class _GeigerMeterState extends State<GeigerMeter>
                   ),
                 ),
               // The dial is a well pressed into the ground…
-              const NeoBox.inset(width: 250, height: 250, radius: 125),
+              NeoBox.inset(
+                width: d * 0.833,
+                height: d * 0.833,
+                radius: d * 0.417,
+              ),
               // …holding a raised disc that carries the reading.
               NeoBox(
-                width: 200,
-                height: 200,
-                radius: 100,
+                width: d * 0.667,
+                height: d * 0.667,
+                radius: d * 0.333,
                 elevation: 0.9,
                 alignment: Alignment.center,
                 child: Column(
@@ -197,16 +210,16 @@ class _GeigerMeterState extends State<GeigerMeter>
                       widget.isActive
                           ? Icons.sensors_rounded
                           : Icons.sensors_off_rounded,
-                      size: 40,
+                      size: 40 * k,
                       color: _color.withValues(alpha: 0.7 + t * 0.3),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: 4 * k),
                     Text(
                       widget.rssi > 0.01
                           ? '${(widget.rssi * 100).round()}%'
                           : '—',
                       style: TextStyle(
-                        fontSize: 48,
+                        fontSize: 48 * k,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -2,
                         height: 1.0,
@@ -214,16 +227,16 @@ class _GeigerMeterState extends State<GeigerMeter>
                       ),
                     ),
                     if (widget.targetEpc != null) ...[
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6 * k),
                       SizedBox(
-                        width: 150,
+                        width: d * 0.5,
                         child: Text(
                           widget.targetEpc!,
                           textAlign: TextAlign.center,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontFamily: 'monospace',
-                            fontSize: 10.5,
+                            fontSize: 10.5 * k,
                             color: neo.inkMuted,
                           ),
                         ),
