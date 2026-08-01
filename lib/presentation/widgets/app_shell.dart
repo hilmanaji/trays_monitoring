@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/auth_controller.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_theme.dart';
+import 'offline_banner.dart';
 import 'siix_logo.dart';
 
 class AppShell extends ConsumerWidget {
@@ -11,112 +14,182 @@ class AppShell extends ConsumerWidget {
   final String location;
   final Widget child;
 
-  static const List<_NavigationItem> _items = <_NavigationItem>[
-    _NavigationItem(
-      label: 'Dashboard',
-      icon: Icons.dashboard_rounded,
-      route: '/dashboard',
-    ),
-    _NavigationItem(
-      label: 'Register',
-      icon: Icons.qr_code_2_rounded,
-      route: '/register',
-    ),
-    _NavigationItem(
-      label: 'Movement',
-      icon: Icons.compare_arrows_rounded,
-      route: '/movement',
-    ),
-    _NavigationItem(
-      label: 'Stock',
-      icon: Icons.inventory_2_rounded,
-      route: '/stock',
-    ),
-    _NavigationItem(label: 'Menu', icon: Icons.grid_view_rounded, route: '/menu'),
+  static const List<_NavItem> _items = <_NavItem>[
+    _NavItem(label: 'Home',     icon: Icons.home_rounded,          route: '/dashboard'),
+    _NavItem(label: 'Scan',     icon: Icons.sensors_rounded,       route: '/movement'),
+    _NavItem(label: 'Stock',    icon: Icons.inventory_2_rounded,   route: '/stock'),
+    _NavItem(label: 'Find',     icon: Icons.location_searching_rounded, route: '/find'),
+    _NavItem(label: 'Menu',     icon: Icons.grid_view_rounded,     route: '/menu'),
   ];
 
-  static const List<String> _menuRoutes = <String>[
+  static const List<String> _menuSubRoutes = <String>[
     '/menu',
     '/history',
     '/scrap',
     '/trays',
     '/profile',
+    '/register',
+    '/settings',
   ];
 
   int _selectedIndex() {
-    if (_menuRoutes.any(location.startsWith)) {
-      return _items.length - 1;
-    }
-
-    for (var index = 0; index < _items.length; index += 1) {
-      if (location.startsWith(_items[index].route)) {
-        return index;
-      }
+    if (_menuSubRoutes.any(location.startsWith)) return _items.length - 1;
+    for (var i = 0; i < _items.length; i++) {
+      if (location.startsWith(_items[i].route)) return i;
     }
     return 0;
   }
 
+  String _titleFor() {
+    if (location.startsWith('/dashboard')) return 'Dashboard';
+    if (location.startsWith('/movement'))  return 'RFID Scan';
+    if (location.startsWith('/stock'))     return 'Stock';
+    if (location.startsWith('/find'))      return 'Find Tray';
+    if (location.startsWith('/register'))  return 'Register RFID';
+    if (location.startsWith('/history'))   return 'Movement History';
+    if (location.startsWith('/scrap'))     return 'Scrap Center';
+    if (location.startsWith('/trays'))     return 'Tray Directory';
+    if (location.startsWith('/profile'))   return 'Profile';
+    if (location.startsWith('/settings'))  return 'Settings';
+    return 'Menu';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedIndex = _selectedIndex();
-    final theme = Theme.of(context);
+    final theme   = Theme.of(context);
+    final cs      = theme.extension<AppColorScheme>()!;
+    final user    = ref.watch(authControllerProvider).user;
     final isTablet = MediaQuery.sizeOf(context).width >= 900;
-    final user = ref.watch(authControllerProvider).user;
-    final currentLabel = _labelForLocation();
+    final selIdx  = _selectedIndex();
 
-    final appBar = AppBar(
-      toolbarHeight: 78,
-      title: Row(
+    final appBar = PreferredSize(
+      preferredSize: const Size.fromHeight(AppSpacing.appBarH + 1),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const SiixLogo(width: 82, showTagline: false),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
+          AppBar(
+            toolbarHeight: AppSpacing.appBarH,
+            title: Row(
               children: [
-                Text(currentLabel),
-                Text(
-                  user?.name ?? 'Warehouse Operations',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall,
+                const SiixLogo(width: 76, showTagline: false),
+                Container(
+                  width: 1,
+                  height: 28,
+                  margin: const EdgeInsets.symmetric(horizontal: 12),
+                  color: theme.colorScheme.outline,
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _titleFor(),
+                        style: theme.textTheme.titleMedium,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (user != null)
+                        Text(
+                          user.name,
+                          style: theme.textTheme.labelSmall,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
                 ),
               ],
             ),
+            actions: [
+              IconButton(
+                tooltip: 'Settings',
+                onPressed: () => context.go('/settings'),
+                icon: const Icon(Icons.tune_rounded, size: 24),
+              ),
+              IconButton(
+                tooltip: 'Profile',
+                onPressed: () => context.go('/profile'),
+                icon: CircleAvatar(
+                  radius: 14,
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  child: Text(
+                    user?.name.isNotEmpty == true
+                        ? user!.name[0].toUpperCase()
+                        : '?',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
           ),
+          Divider(height: 1, thickness: 1, color: theme.colorScheme.outline),
         ],
       ),
-      actions: [
-        IconButton(
-          tooltip: 'Profile',
-          onPressed: () => context.go('/profile'),
-          icon: const Icon(Icons.person_outline_rounded),
+    );
+
+    final bottomNav = Container(
+      decoration: BoxDecoration(
+        color: theme.navigationBarTheme.backgroundColor,
+        border: Border(
+          top: BorderSide(color: theme.colorScheme.outline, width: 1),
         ),
-        const SizedBox(width: 8),
-      ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: NavigationBar(
+          selectedIndex: selIdx,
+          onDestinationSelected: (i) => context.go(_items[i].route),
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          destinations: _items
+              .map(
+                (item) => NavigationDestination(
+                  icon: Icon(item.icon),
+                  label: item.label,
+                ),
+              )
+              .toList(),
+        ),
+      ),
     );
 
     if (isTablet) {
       return Scaffold(
         appBar: appBar,
-        body: Row(
+        body: Column(
           children: [
-            NavigationRail(
-              extended: MediaQuery.sizeOf(context).width >= 1200,
-              selectedIndex: selectedIndex,
-              onDestinationSelected: (index) => context.go(_items[index].route),
-              destinations: _items
-                  .map(
-                    (item) => NavigationRailDestination(
-                      icon: Icon(item.icon),
-                      label: Text(item.label),
-                    ),
-                  )
-                  .toList(),
+            const OfflineBanner(),
+            Expanded(
+              child: Row(
+                children: [
+                  NavigationRail(
+                    extended: MediaQuery.sizeOf(context).width >= 1200,
+                    selectedIndex: selIdx,
+                    onDestinationSelected: (i) => context.go(_items[i].route),
+                    backgroundColor: cs.surfaceCard,
+                    destinations: _items
+                        .map(
+                          (item) => NavigationRailDestination(
+                            icon: Icon(item.icon),
+                            label: Text(item.label),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                  VerticalDivider(
+                    width: 1,
+                    thickness: 1,
+                    color: theme.colorScheme.outline,
+                  ),
+                  Expanded(child: SafeArea(child: child)),
+                ],
+              ),
             ),
-            const VerticalDivider(width: 1),
-            Expanded(child: SafeArea(child: child)),
           ],
         ),
       );
@@ -124,63 +197,19 @@ class AppShell extends ConsumerWidget {
 
     return Scaffold(
       appBar: appBar,
-      body: SafeArea(child: child),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x12000000),
-              blurRadius: 18,
-              offset: Offset(0, -6),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          top: false,
-          child: NavigationBar(
-            selectedIndex: selectedIndex,
-            onDestinationSelected: (index) => context.go(_items[index].route),
-            destinations: _items
-                .map(
-                  (item) => NavigationDestination(
-                    icon: Icon(item.icon),
-                    label: item.label,
-                  ),
-                )
-                .toList(),
-          ),
-        ),
+      body: Column(
+        children: [
+          const OfflineBanner(),
+          Expanded(child: SafeArea(top: false, child: child)),
+        ],
       ),
+      bottomNavigationBar: bottomNav,
     );
-  }
-
-  String _labelForLocation() {
-    if (location.startsWith('/profile')) {
-      return 'Profile';
-    }
-    if (location.startsWith('/history')) {
-      return 'History Log';
-    }
-    if (location.startsWith('/scrap')) {
-      return 'Scrap Center';
-    }
-    if (location.startsWith('/trays')) {
-      return 'Tray Directory';
-    }
-
-    for (final item in _items) {
-      if (location.startsWith(item.route)) {
-        return item.label;
-      }
-    }
-
-    return 'Tray Monitoring';
   }
 }
 
-class _NavigationItem {
-  const _NavigationItem({
+class _NavItem {
+  const _NavItem({
     required this.label,
     required this.icon,
     required this.route,

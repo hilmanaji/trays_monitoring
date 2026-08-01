@@ -6,12 +6,14 @@ import '../presentation/providers/auth_controller.dart';
 import '../presentation/screens/auth/login_screen.dart';
 import '../presentation/screens/auth/splash_screen.dart';
 import '../presentation/screens/dashboard/dashboard_screen.dart';
+import '../presentation/screens/find/find_screen.dart';
 import '../presentation/screens/history/movement_history_screen.dart';
 import '../presentation/screens/menu/menu_screen.dart';
 import '../presentation/screens/movement/tray_movement_screen.dart';
 import '../presentation/screens/profile/profile_screen.dart';
 import '../presentation/screens/rfid/rfid_registration_screen.dart';
 import '../presentation/screens/scrap/scrap_screen.dart';
+import '../presentation/screens/settings/settings_screen.dart';
 import '../presentation/screens/stock/stock_screen.dart';
 import '../presentation/screens/tray/tray_detail_screen.dart';
 import '../presentation/screens/tray/tray_list_screen.dart';
@@ -81,6 +83,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const StockScreen(),
           ),
           GoRoute(path: '/menu', builder: (context, state) => const MenuScreen()),
+          GoRoute(path: '/find', builder: (context, state) => const FindScreen()),
+          GoRoute(
+            path: '/settings',
+            builder: (context, state) => const SettingsScreen(),
+          ),
           GoRoute(
             path: '/profile',
             builder: (context, state) => const ProfileScreen(),
