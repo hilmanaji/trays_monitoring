@@ -3,7 +3,8 @@ class ApiConstants {
   const ApiConstants._();
 
   // static const String _defaultServerUrl = 'http://access-siix.test:8080';
-  static const String _defaultServerUrl = 'http://192.168.62.38';
+  static const String _defaultServerUrl = 'https://access.siix-ems.co.id';
+  // static const String _defaultServerUrl = 'http://192.168.62.38';
 
   static const String _serverUrlFromEnvironment = String.fromEnvironment(
     'API_SERVER_URL',

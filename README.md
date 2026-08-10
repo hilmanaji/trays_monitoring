@@ -1,17 +1,25 @@
-# trays_monitoring
+# Tray Monitoring (RFID Tray Tracking)
 
-A new Flutter project.
+Aplikasi handheld Flutter untuk melacak tray produksi berbasis RFID UHF, dijalankan di perangkat
+**UROVO DT50(P)**.
 
-## Getting Started
+## Mulai cepat
 
-This project is a starting point for a Flutter application.
+```bash
+flutter pub get
+flutter run --dart-define=API_SERVER_URL=http://<alamat-server>
+```
 
-A few resources to get you started if this is your first Flutter project:
+Tanpa `--dart-define`, aplikasi memakai server default `http://192.168.62.38/api/v1`.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+```bash
+flutter analyze
+flutter test
+flutter build apk --release --dart-define=API_SERVER_URL=<url-produksi>
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Dokumentasi
+
+📘 **[Dokumentasi Teknis Lengkap](docs/TECHNICAL_DOCUMENTATION.md)** — arsitektur, kontrak API,
+subsistem RFID, design system, panduan developer untuk menambah fitur, keterbatasan yang diketahui,
+troubleshooting, dan checklist rilis.
